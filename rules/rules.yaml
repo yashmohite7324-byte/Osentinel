@@ -1,0 +1,342 @@
+# OSentinel detection rules.
+#
+# Each rule is evaluated against a single normalised event. The `when` field is
+# a Python expression; the event's attributes are in scope as plain names, plus
+# these helpers: entropy(s), matches(pattern, text), any_of(text, [needles]),
+# basename(p), dirname(p), lower(s), len/abs/min/max/int/float/str.
+#
+# Scores are a rule's own contribution. The correlator raises the final incident
+# score when several independent rules agree, so individual scores stay honest.
+
+rules:
+
+  # ------------------------------------------------------------- execution
+
+  - id: EXEC-SHELL-FROM-SERVICE
+    title: Interactive shell spawned by a network-facing service
+    category: process
+    action: process_started
+    score: 82
+    confidence: 0.85
+    mitre: [T1059]
+    evidence: [pid, name, cmdline, parent_name, user]
+    when: >
+      name in ("sh","bash","dash","zsh","ksh","cmd.exe","powershell.exe")
+      and any_of(parent_name, ["nginx","apache","httpd","tomcat","node","java",
+                               "php-fpm","postgres","mysqld","w3wp"])
+    remediation: >
+      A web or database service has no reason to spawn a shell. Capture the
+      parent's request log around this timestamp and treat the service as
+      compromised until proven otherwise.
+
+  - id: EXEC-REVERSE-SHELL-PATTERN
+    title: Command line matches a reverse shell construction
+    category: process
+    action: process_started
+    score: 90
+    confidence: 0.88
+    mitre: [T1059, T1071]
+    evidence: [pid, name, cmdline, user, parent_name]
+    when: >
+      matches(r"(bash|sh)\s+-i\s+>&\s*/dev/(tcp|udp)/", cmdline)
+      or matches(r"nc(\.traditional)?\s+(-[a-z]*e|-c)\s", cmdline)
+      or matches(r"socat\s+.*exec:.*(sh|bash)", cmdline)
+      or matches(r"python3?\s+-c.*socket.*(connect|dup2)", cmdline)
+      or matches(r"(mkfifo|mknod).*\|\s*(sh|bash)\s*-i", cmdline)
+    remediation: >
+      Freeze the process before it exits, record its remote peer from the socket
+      table, then block that peer at the network edge.
+
+  - id: EXEC-ENCODED-PAYLOAD
+    title: Process launched from an encoded or obfuscated argument
+    category: process
+    action: process_started
+    score: 74
+    confidence: 0.72
+    mitre: [T1027, T1059]
+    evidence: [pid, name, cmdline, user]
+    when: >
+      matches(r"-(enc|encodedcommand|e)\s+[A-Za-z0-9+/=]{40,}", cmdline)
+      or matches(r"base64\s+(-d|--decode).*\|\s*(sh|bash|python)", cmdline)
+      or matches(r"eval\s*\(\s*(atob|base64_decode)", cmdline)
+      or (len(cmdline) > 120 and entropy(cmdline) > 5.2)
+    remediation: >
+      Decode the argument in an isolated environment before deciding. High
+      entropy alone is weak, so wait for a second signal on the same process.
+
+  - id: EXEC-FROM-TEMP-OR-MEMORY
+    title: Binary executing from a world-writable or memory-backed directory
+    category: process
+    action: process_started
+    score: 76
+    confidence: 0.8
+    mitre: [T1036, T1059]
+    evidence: [pid, name, exe, cmdline, user]
+    when: >
+      any_of(exe, ["/tmp/","/var/tmp/","/dev/shm/","/run/shm/",
+                   "\\Temp\\","\\AppData\\Local\\Temp\\"])
+      or matches(r"(^|\s)/(tmp|var/tmp|dev/shm|run/shm)/[^\s]+", cmdline)
+    remediation: >
+      Legitimate software installs into a package-managed path. Hash the binary,
+      check it against your inventory, and quarantine it if unknown.
+
+  - id: EXEC-LOLBIN-DOWNLOAD
+    title: Trusted system utility used to fetch a remote payload
+    category: process
+    action: process_started
+    score: 70
+    confidence: 0.75
+    mitre: [T1105]
+    evidence: [pid, name, cmdline, parent_name]
+    when: >
+      name in ("curl","wget","certutil.exe","bitsadmin.exe","powershell.exe","ftp")
+      and matches(r"https?://", cmdline)
+      and any_of(cmdline, ["|sh","| sh","|bash","| bash","-o /tmp","-O /tmp",
+                           "-outfile","chmod +x","urlcache"])
+    remediation: >
+      Recover the URL from the command line, retrieve the payload in a sandbox,
+      and search other hosts for the same destination.
+
+  - id: EXEC-MASQUERADE-KERNEL-THREAD
+    title: Userspace process imitating a kernel thread name
+    category: process
+    action: process_started
+    score: 80
+    confidence: 0.82
+    mitre: [T1036]
+    evidence: [pid, name, exe, cmdline, user]
+    when: >
+      matches(r"^\[.*\]$", name) and exe != ""
+    remediation: >
+      Real kernel threads have no executable path. A process with both a
+      bracketed name and a backing binary is deliberately hiding.
+
+  # --------------------------------------------------- privilege and identity
+
+  - id: PRIV-ESCALATION-TO-ROOT
+    title: Process gained root privileges after it started
+    category: identity
+    action: privilege_changed
+    score: 78
+    confidence: 0.8
+    mitre: [T1548, T1068]
+    evidence: [pid, name, from_euid, to_euid, cmdline]
+    when: to_euid == 0 and from_euid != 0
+    remediation: >
+      Confirm the transition came from an approved setuid path such as sudo.
+      An unexplained gain is an escalation until you can name the mechanism.
+
+  - id: PRIV-SUID-DROPPER
+    title: Set-user-ID bit added to a file
+    category: filesystem
+    action: permissions_changed
+    score: 85
+    confidence: 0.85
+    mitre: [T1548]
+    evidence: [path, old_mode, new_mode]
+    when: "'s' in new_mode and 's' not in old_mode"
+    remediation: >
+      A new setuid binary is a root backdoor that survives a reboot. Remove the
+      bit, then find the process that set it.
+
+  - id: PRIV-CREDENTIAL-FILE-WRITE
+    title: Authentication database modified
+    category: filesystem
+    score: 88
+    confidence: 0.9
+    mitre: [T1136, T1098]
+    evidence: [path, old_sha256, new_sha256]
+    when: >
+      action in ("file_modified","file_created")
+      and any_of(path, ["/etc/passwd","/etc/shadow","/etc/sudoers","/etc/group",
+                        "authorized_keys","/etc/sudoers.d/"])
+    remediation: >
+      Diff the file against your configuration baseline and look for an added
+      account, an added key, or a new NOPASSWD entry.
+
+  # ------------------------------------------------------------ persistence
+
+  - id: PERSIST-SCHEDULER
+    title: Scheduled task or service definition changed
+    category: filesystem
+    score: 72
+    confidence: 0.8
+    mitre: [T1053, T1543]
+    evidence: [path, size]
+    when: >
+      action in ("file_modified","file_created")
+      and any_of(path, ["/etc/cron","/var/spool/cron","/etc/systemd/system",
+                        "/etc/init.d","/Library/LaunchDaemons",
+                        "\\Start Menu\\Programs\\Startup"])
+    remediation: >
+      Read the new entry. Persistence is where an intruder is most exposed,
+      because the payload path is written down for you.
+
+  - id: PERSIST-SHELL-PROFILE
+    title: Shell startup file altered
+    category: filesystem
+    score: 62
+    confidence: 0.7
+    mitre: [T1546]
+    evidence: [path, old_sha256, new_sha256]
+    when: >
+      action == "file_modified"
+      and any_of(basename(path), [".bashrc",".bash_profile",".profile",".zshrc",
+                                  ".bash_login","rc.local"])
+    remediation: >
+      Startup files run on every login. Compare against the previous revision
+      and look for an appended line at the end of the file.
+
+  - id: PERSIST-SSH-KEY
+    title: SSH key material created or changed
+    category: filesystem
+    score: 80
+    confidence: 0.85
+    mitre: [T1098]
+    evidence: [path]
+    when: >
+      any_of(path, [".ssh/authorized_keys",".ssh/id_rsa",".ssh/id_ed25519"])
+      and action in ("file_created","file_modified")
+    remediation: >
+      List every key in the file and match each fingerprint to a named owner.
+      Remove anything you cannot attribute.
+
+  # --------------------------------------------------------------- network
+
+  - id: NET-UNEXPECTED-LISTENER
+    title: New listening socket opened on an unusual port
+    category: network
+    action: listener_opened
+    score: 66
+    confidence: 0.7
+    mitre: [T1571]
+    evidence: [laddr, port, process, pid]
+    when: >
+      port > 1024 and port not in (3000,3306,5000,5173,5432,6379,8000,8080,8443,
+                                   8787,9000,9090,27017)
+      and process not in ("code","node","docker-proxy","containerd")
+    remediation: >
+      Map the socket to its process and confirm the service is one you deployed.
+      An unexpected listener is a backdoor waiting for its operator.
+
+  - id: NET-SUSPICIOUS-EGRESS-PORT
+    title: Outbound connection to a port associated with covert channels
+    category: network
+    action: connection_opened
+    score: 64
+    confidence: 0.65
+    mitre: [T1571, T1071]
+    evidence: [raddr, process, pid, laddr]
+    when: >
+      remote_port in (4444,1337,31337,6667,6697,9001,5555,8081,1080,9050)
+    remediation: >
+      These ports carry default payload handlers and IRC-style channels. Verify
+      the destination address against threat intelligence.
+
+  - id: NET-BEACONING
+    title: Regularly timed contact with a single remote host
+    category: network
+    action: periodic_contact
+    score: 78
+    confidence: 0.78
+    mitre: [T1071, T1041]
+    evidence: [raddr, process, pid, interval_s, jitter_cv, samples]
+    when: jitter_cv < 0.15 and interval_s < 300 and samples >= 6
+    remediation: >
+      Machine-regular timing is the signature of an automated channel. Confirm
+      it is not a monitoring agent or update checker before escalating.
+
+  - id: NET-SHELL-WITH-SOCKET
+    title: Shell process holding an outbound network connection
+    category: network
+    action: connection_opened
+    score: 84
+    confidence: 0.8
+    mitre: [T1059, T1071]
+    evidence: [raddr, process, pid]
+    when: process in ("sh","bash","dash","zsh","nc","ncat","socat","perl","ruby")
+    remediation: >
+      Shells do not normally hold sockets. Capture the peer address, then freeze
+      the process rather than killing it so the socket survives for analysis.
+
+  # ---------------------------------------------------- evasion and impact
+
+  - id: EVADE-LOG-TAMPERING
+    title: System log removed or truncated
+    category: filesystem
+    score: 86
+    confidence: 0.85
+    mitre: [T1070]
+    evidence: [path]
+    when: >
+      action in ("file_deleted","file_modified")
+      and any_of(path, ["/var/log/auth.log","/var/log/secure","/var/log/wtmp",
+                        "/var/log/syslog","/var/log/audit"])
+    remediation: >
+      Log destruction is deliberate. Pull the same period from your remote log
+      collector, which is the copy the intruder could not reach.
+
+  - id: EVADE-SECURITY-TOOLING
+    title: Security control being stopped or disabled
+    category: process
+    action: process_started
+    score: 82
+    confidence: 0.82
+    mitre: [T1562]
+    evidence: [pid, name, cmdline, user]
+    when: >
+      any_of(cmdline, ["systemctl stop auditd","systemctl stop firewalld",
+                       "service auditd stop","setenforce 0","iptables -F",
+                       "ufw disable","Set-MpPreference -DisableRealtimeMonitoring",
+                       "sc stop windefend","auditctl -D"])
+    remediation: >
+      Restore the control immediately and treat every event after this timestamp
+      as collected with reduced visibility.
+
+  - id: IMPACT-MASS-FILE-WRITE
+    title: Process rewriting files at a rate consistent with ransomware
+    category: process
+    action: process_started
+    score: 70
+    confidence: 0.6
+    mitre: [T1486]
+    evidence: [pid, name, cmdline]
+    when: >
+      any_of(cmdline, ["openssl enc","gpg --encrypt","7z a -p","-recurse -encrypt"])
+      and any_of(cmdline, ["-r","--recursive","/home","/Users","/srv","/var/www"])
+    remediation: >
+      Suspend the process rather than killing it. A frozen process still holds
+      the key material in memory, which a dead one does not.
+
+  - id: DISCOVERY-HOST-ENUMERATION
+    title: Rapid host and account enumeration
+    category: process
+    action: process_started
+    score: 45
+    confidence: 0.6
+    mitre: [T1082, T1087, T1046]
+    evidence: [pid, name, cmdline, parent_name, user]
+    when: >
+      (name in ("whoami","id","hostname","uname","netstat","ss","arp","ifconfig")
+       or any_of(cmdline, ["net user","net group","wmic os get","systeminfo"])
+       or matches(r"\b(whoami|id|uname|hostname)\b.*[;&|].*\b(whoami|id|uname|hostname)\b",
+                  cmdline))
+      and parent_name in ("sh","bash","dash","python3","perl","node","php","sshd")
+    remediation: >
+      Enumeration alone is low value. It matters as the first stage of a chain,
+      so let the correlator raise it when execution signals follow.
+
+  - id: DISCOVERY-PORT-SCAN-TOOLING
+    title: Network scanning tool started on this host
+    category: process
+    action: process_started
+    score: 60
+    confidence: 0.7
+    mitre: [T1046]
+    evidence: [pid, name, cmdline, user]
+    when: >
+      name in ("nmap","masscan","zmap","hydra","nikto")
+      or matches(r"nc\s+-z", cmdline)
+    remediation: >
+      Confirm the scan is an authorised assessment with a matching change
+      ticket. Otherwise this host is being used as a pivot.

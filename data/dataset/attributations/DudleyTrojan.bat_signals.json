@@ -1,0 +1,88 @@
+{
+  "sample_id": "DudleyTrojan.bat",
+  "extraction_timestamp": "2025-11-01T00:16:01.547448",
+  "signal_categories": [
+    "static_metadata",
+    "strings_language",
+    "code_stylometry",
+    "build_environment",
+    "runtime_behavior",
+    "network_infrastructure",
+    "operational_artifacts",
+    "external_correlation",
+    "crypto_monetization",
+    "automation_signals"
+  ],
+  "static_metadata": {
+    "file_size": 176,
+    "mime_type": "text/x-msdos-batch",
+    "yara_matches": [],
+    "packers": [],
+    "has_signature": false
+  },
+  "strings_language": {
+    "strings": [
+      "@echo off",
+      "echo YOU HAVE BEEN HACKED!!!>>AUTOEXEC.BAT",
+      "echo YOU HAVE BEEN HACKED!!!>>AUTOEXEC.BAT",
+      "echo  echo.>>AUTOEXEC.BAT",
+      "echo :HACK>>AUTOEXEC.BAT",
+      "echo GOTO HACK>>AUTOEXEC.BAT"
+    ],
+    "languages_detected": [],
+    "comments_language": null,
+    "hardcoded_paths": [],
+    "emails": [],
+    "phone_numbers": [],
+    "ip_addresses": [],
+    "urls": [],
+    "locale_markers": {
+      "date_format_hints": [],
+      "currency_symbols": [],
+      "decimal_separators": []
+    }
+  },
+  "runtime_behavior": {
+    "persistence_methods": [
+      "registry_run_key"
+    ],
+    "syscalls": [],
+    "sandbox_checks": [],
+    "privilege_escalation_attempts": []
+  },
+  "network_infrastructure": {
+    "domains": [],
+    "ip_addresses": [],
+    "tls_ja3": null,
+    "asn": null,
+    "beacon_interval_sec": null
+  },
+  "operational_artifacts": {
+    "time_profile": {},
+    "weekday_activity": [],
+    "debug_artifacts": [],
+    "test_indicators": []
+  },
+  "external_correlation": {
+    "fuzzy_hash": null,
+    "vt_urls": [
+      "https://www.virustotal.com/gui/file/39a075e440082d8614dbf845f36e7a656d87ba2eb66e225b75c259832d2766bc"
+    ],
+    "whois": {},
+    "passive_dns": [],
+    "md5": "6784f47701e85ab826f147c900c3e3d8",
+    "sha256": "39a075e440082d8614dbf845f36e7a656d87ba2eb66e225b75c259832d2766bc"
+  },
+  "crypto_monetization": {
+    "cryptocurrency_addresses": [],
+    "algorithms": [],
+    "static_keys": false,
+    "iv_reuse": false
+  },
+  "automation_signals": {
+    "repetitive_code": false,
+    "template_based": false,
+    "unniform_naming": false,
+    "likely_automated": false
+  }
+}

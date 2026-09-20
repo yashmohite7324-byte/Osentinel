@@ -1,0 +1,83 @@
+{
+  "sample_id": "sample_executable.py",
+  "extraction_timestamp": "2025-11-01T09:34:15.990721",
+  "signal_categories": [
+    "static_metadata",
+    "strings_language",
+    "code_stylometry",
+    "build_environment",
+    "runtime_behavior",
+    "network_infrastructure",
+    "operational_artifacts",
+    "external_correlation",
+    "crypto_monetization",
+    "automation_signals"
+  ],
+  "static_metadata": {
+    "file_size": 12,
+    "mime_type": "text/plain",
+    "yara_matches": [],
+    "packers": [],
+    "has_signature": false
+  },
+  "strings_language": {
+    "strings": [
+      "print('ok')"
+    ],
+    "languages_detected": [],
+    "comments_language": null,
+    "hardcoded_paths": [],
+    "emails": [],
+    "phone_numbers": [],
+    "ip_addresses": [],
+    "urls": [],
+    "locale_markers": {
+      "date_format_hints": [],
+      "currency_symbols": [],
+      "decimal_separators": []
+    }
+  },
+  "runtime_behavior": {
+    "persistence_methods": [
+      "registry_run_key"
+    ],
+    "syscalls": [],
+    "sandbox_checks": [],
+    "privilege_escalation_attempts": []
+  },
+  "network_infrastructure": {
+    "domains": [],
+    "ip_addresses": [],
+    "tls_ja3": null,
+    "asn": null,
+    "beacon_interval_sec": null
+  },
+  "operational_artifacts": {
+    "time_profile": {},
+    "weekday_activity": [],
+    "debug_artifacts": [],
+    "test_indicators": []
+  },
+  "external_correlation": {
+    "fuzzy_hash": null,
+    "vt_urls": [
+      "https://www.virustotal.com/gui/file/ad64355106bb158b020ecf9702be48f7730fc091dd4bb6a2f092b40393495b3d"
+    ],
+    "whois": {},
+    "passive_dns": [],
+    "md5": "0bd9d30fdff5a8f7609324caa7b1aa3d",
+    "sha256": "ad64355106bb158b020ecf9702be48f7730fc091dd4bb6a2f092b40393495b3d"
+  },
+  "crypto_monetization": {
+    "cryptocurrency_addresses": [],
+    "algorithms": [],
+    "static_keys": false,
+    "iv_reuse": false
+  },
+  "automation_signals": {
+    "repetitive_code": false,
+    "template_based": false,
+    "unniform_naming": false,
+    "likely_automated": false
+  }
+}

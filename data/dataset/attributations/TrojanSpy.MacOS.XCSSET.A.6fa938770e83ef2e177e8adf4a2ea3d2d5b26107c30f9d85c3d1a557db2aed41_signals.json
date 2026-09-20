@@ -1,0 +1,117 @@
+{
+  "sample_id": "TrojanSpy.MacOS.XCSSET.A.6fa938770e83ef2e177e8adf4a2ea3d2d5b26107c30f9d85c3d1a557db2aed41",
+  "extraction_timestamp": "2025-11-01T13:22:15.148717",
+  "signal_categories": [
+    "static_metadata",
+    "strings_language",
+    "code_stylometry",
+    "build_environment",
+    "runtime_behavior",
+    "network_infrastructure",
+    "operational_artifacts",
+    "external_correlation",
+    "crypto_monetization",
+    "automation_signals"
+  ],
+  "static_metadata": {
+    "file_size": 2394,
+    "mime_type": "application/octet-stream",
+    "yara_matches": [],
+    "packers": [],
+    "has_signature": false
+  },
+  "strings_language": {
+    "strings": [
+      "FasdUAS 1.101.10",
+      ".ascrcmnt****",
+      ".aevtoappnull",
+      ".ascrcmnt****",
+      "message",
+      "message",
+      "modname",
+      "modName",
+      "username",
+      "userName",
+      ".sysoexecTEXT",
+      "\ftargetfolder",
+      "\ftargetFolder",
+      "ofile",
+      "oFile",
+      "dfolder",
+      "dFolder",
+      ".sysoexecTEXT",
+      "username",
+      "userName",
+      "buildvendor",
+      "buildVendor",
+      "\fbuildversion",
+      "\fbuildVersion",
+      ".sysodelanull",
+      ".aevtoappnull",
+      "buildvendor",
+      "buildVendor",
+      "\fbuildversion",
+      "\fbuildVersion",
+      ".sysoexecTEXT",
+      "username",
+      "userName",
+      ".earsffdralis",
+      "dfolder",
+      "dFolder",
+      ".ascrcmnt****"
+    ],
+    "languages_detected": [],
+    "comments_language": null,
+    "hardcoded_paths": [],
+    "emails": [],
+    "phone_numbers": [],
+    "ip_addresses": [],
+    "urls": [],
+    "locale_markers": {
+      "date_format_hints": [],
+      "currency_symbols": [],
+      "decimal_separators": []
+    }
+  },
+  "runtime_behavior": {
+    "persistence_methods": [],
+    "syscalls": [],
+    "sandbox_checks": [],
+    "privilege_escalation_attempts": []
+  },
+  "network_infrastructure": {
+    "domains": [],
+    "ip_addresses": [],
+    "tls_ja3": null,
+    "asn": null,
+    "beacon_interval_sec": null
+  },
+  "operational_artifacts": {
+    "time_profile": {},
+    "weekday_activity": [],
+    "debug_artifacts": [],
+    "test_indicators": []
+  },
+  "external_correlation": {
+    "fuzzy_hash": null,
+    "vt_urls": [
+      "https://www.virustotal.com/gui/file/6fa938770e83ef2e177e8adf4a2ea3d2d5b26107c30f9d85c3d1a557db2aed41"
+    ],
+    "whois": {},
+    "passive_dns": [],
+    "md5": "3b0257a1a7e8b7e66840888db18be1cd",
+    "sha256": "6fa938770e83ef2e177e8adf4a2ea3d2d5b26107c30f9d85c3d1a557db2aed41"
+  },
+  "crypto_monetization": {
+    "cryptocurrency_addresses": [],
+    "algorithms": [],
+    "static_keys": false,
+    "iv_reuse": false
+  },
+  "automation_signals": {
+    "repetitive_code": false,
+    "template_based": false,
+    "unniform_naming": false,
+    "likely_automated": false
+  }
+}

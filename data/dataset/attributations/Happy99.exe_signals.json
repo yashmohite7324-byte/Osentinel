@@ -1,0 +1,185 @@
+{
+  "sample_id": "Happy99.exe",
+  "extraction_timestamp": "2025-11-01T10:03:15.740349",
+  "signal_categories": [
+    "static_metadata",
+    "strings_language",
+    "code_stylometry",
+    "build_environment",
+    "runtime_behavior",
+    "network_infrastructure",
+    "operational_artifacts",
+    "external_correlation",
+    "crypto_monetization",
+    "automation_signals"
+  ],
+  "static_metadata": {
+    "file_size": 10000,
+    "mime_type": "application/vnd.microsoft.portable-executable",
+    "yara_matches": [],
+    "packers": [],
+    "has_signature": false
+  },
+  "strings_language": {
+    "strings": [
+      "This program must be run under Win32",
+      "`DATA",
+      ".idata",
+      ".reloc",
+      "XPPP_",
+      "=END t",
+      "=ZEROt",
+      "PPPh,",
+      "=.text#=.edat",
+      "=.dattY",
+      "=connt =sendtbB",
+      "Ska.dll",
+      "jdjdh",
+      "PPPh3",
+      "ZERO\"",
+      "*qZERO",
+      "Rt'Rt/t",
+      "t\f\f[G",
+      "ZEROA",
+      "begin 644 Happy99.exe",
+      "\\Ska.exe",
+      "\\liste.ska",
+      "ZEROf",
+      "ZERO(",
+      "ZEROl",
+      "ZEROF",
+      "KERNEL32.dll",
+      "LoadLibraryA",
+      "FreeLibrary",
+      "GetProcAddress",
+      "Happy New Year 1999 !!",
+      "KERNEL32.dll",
+      "ADVAPI32.dll",
+      "USER32.dll",
+      "GDI32.dll",
+      "WriteFile",
+      "UnmapViewOfFile",
+      "GetWindowsDirectoryA",
+      "GetModuleHandleA",
+      "CopyFileA",
+      "GetProcAddress",
+      "ExitProcess",
+      "GetFileSize",
+      "GetModuleFileNameA",
+      "LocalAlloc",
+      "CreateFileMappingA",
+      "GetVersionExA",
+      "GetSystemDirectoryA",
+      "CreateFileA",
+      "CloseHandle",
+      "LocalFree",
+      "MapViewOfFile",
+      "ReadFile",
+      "RegSetValueExA",
+      "RegCreateKeyExA",
+      "RegCloseKey",
+      "ReleaseDC",
+      "RegisterClassA",
+      "PostQuitMessage",
+      "PeekMessageA",
+      "GetDC",
+      "DispatchMessageA",
+      "DefWindowProcA",
+      "CreateWindowExA",
+      "ShowWindow",
+      "UpdateWindow",
+      "TranslateMessage",
+      "SetPixelV",
+      "0F0^0p0{0",
+      "161H1O1U1[1a1s1y1",
+      "2-2;2M2Z2l2",
+      "3.363C3J3P3Y3",
+      "4*464;4A4L4Y4e4w4|4",
+      "6(6d636N6Z6_6i6o6s6x6",
+      "828?8v8|8",
+      "9 9&9,92989>9D9J9P9V9\\9b9h9n9"
+    ],
+    "languages_detected": [],
+    "comments_language": null,
+    "hardcoded_paths": [],
+    "emails": [],
+    "phone_numbers": [],
+    "ip_addresses": [],
+    "urls": [],
+    "locale_markers": {
+      "date_format_hints": [],
+      "currency_symbols": [],
+      "decimal_separators": []
+    }
+  },
+  "code_stylometry": {
+    "naming_conventions": {
+      "camel_case_pct": 0,
+      "snake_case_pct": 0,
+      "hungarian_pct": 0,
+      "all_caps_pct": 0
+    },
+    "code_complexity": {
+      "average_cyclomatic": 2.8939393939393936,
+      "max_complexity": 0,
+      "function_count": 0
+    },
+    "api_usage": {
+      "unique_api_count": 0,
+      "api_names": []
+    },
+    "unique_idioms": [],
+    "has_ast_features": false
+  },
+  "build_environment": {
+    "pdb_paths": [],
+    "build_host": null,
+    "vcs_hash": null,
+    "compile_timezone_hint": null,
+    "dependencies": [],
+    "compiler": "borland:pascal"
+  },
+  "runtime_behavior": {
+    "persistence_methods": [
+      "registry_run_key"
+    ],
+    "syscalls": [],
+    "sandbox_checks": [],
+    "privilege_escalation_attempts": []
+  },
+  "network_infrastructure": {
+    "domains": [],
+    "ip_addresses": [],
+    "tls_ja3": null,
+    "asn": null,
+    "beacon_interval_sec": null
+  },
+  "operational_artifacts": {
+    "time_profile": {},
+    "weekday_activity": [],
+    "debug_artifacts": [],
+    "test_indicators": []
+  },
+  "external_correlation": {
+    "fuzzy_hash": null,
+    "vt_urls": [
+      "https://www.virustotal.com/gui/file/4ebe3e1af5e147c580ecce052fe7d7d0219d5e5a2f5e6d8a7f7291735923db18"
+    ],
+    "whois": {},
+    "passive_dns": [],
+    "md5": "02dd0eaa9649a11e55fa5467fa4b8ef8",
+    "sha256": "4ebe3e1af5e147c580ecce052fe7d7d0219d5e5a2f5e6d8a7f7291735923db18"
+  },
+  "crypto_monetization": {
+    "cryptocurrency_addresses": [],
+    "algorithms": [],
+    "static_keys": false,
+    "iv_reuse": false
+  },
+  "automation_signals": {
+    "repetitive_code": false,
+    "template_based": false,
+    "unniform_naming": true,
+    "likely_automated": true
+  }
+}

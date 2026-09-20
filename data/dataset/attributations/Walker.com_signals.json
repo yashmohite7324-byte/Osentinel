@@ -1,0 +1,99 @@
+{
+  "sample_id": "Walker.com",
+  "extraction_timestamp": "2025-11-01T13:39:15.019992",
+  "signal_categories": [
+    "static_metadata",
+    "strings_language",
+    "code_stylometry",
+    "build_environment",
+    "runtime_behavior",
+    "network_infrastructure",
+    "operational_artifacts",
+    "external_correlation",
+    "crypto_monetization",
+    "automation_signals"
+  ],
+  "static_metadata": {
+    "file_size": 5078,
+    "mime_type": "application/x-dosexec",
+    "yara_matches": [],
+    "pe_error": "'DOS Header magic not found.'",
+    "packers": [],
+    "has_signature": false
+  },
+  "strings_language": {
+    "strings": [
+      "PSQRVW",
+      "!_^ZY[X",
+      "*.exe",
+      "command.com",
+      "Darkest Avenger",
+      "This is not dedicated to Sara Gordon",
+      "It is dedicated to her GROOVE!",
+      "U812 COM ",
+      "WALKER V1.00 - This absolutely harmless and selfdestructive program is written by UJHPTTLZ in the city of Istanbul, 1992",
+      "PSVPSQRVW",
+      "_^ZY[X^[X",
+      "_^[ZYX",
+      "PSQRVW",
+      "_^ZY[X",
+      ",,,,,,",
+      "''   *"
+    ],
+    "languages_detected": [],
+    "comments_language": null,
+    "hardcoded_paths": [],
+    "emails": [],
+    "phone_numbers": [],
+    "ip_addresses": [],
+    "urls": [],
+    "locale_markers": {
+      "date_format_hints": [],
+      "currency_symbols": [],
+      "decimal_separators": []
+    }
+  },
+  "runtime_behavior": {
+    "persistence_methods": [
+      "registry_run_key"
+    ],
+    "syscalls": [],
+    "sandbox_checks": [],
+    "privilege_escalation_attempts": []
+  },
+  "network_infrastructure": {
+    "domains": [],
+    "ip_addresses": [],
+    "tls_ja3": null,
+    "asn": null,
+    "beacon_interval_sec": null
+  },
+  "operational_artifacts": {
+    "time_profile": {},
+    "weekday_activity": [],
+    "debug_artifacts": [],
+    "test_indicators": []
+  },
+  "external_correlation": {
+    "fuzzy_hash": null,
+    "vt_urls": [
+      "https://www.virustotal.com/gui/file/b87b48dcbf779b06c6ca6491cd31328cf840578d29a6327b7a44f9043ce1eb07"
+    ],
+    "whois": {},
+    "passive_dns": [],
+    "md5": "93ceffafe7bb69ec3f9b4a90908ece46",
+    "sha256": "b87b48dcbf779b06c6ca6491cd31328cf840578d29a6327b7a44f9043ce1eb07"
+  },
+  "crypto_monetization": {
+    "cryptocurrency_addresses": [],
+    "algorithms": [],
+    "static_keys": false,
+    "iv_reuse": false
+  },
+  "automation_signals": {
+    "repetitive_code": false,
+    "template_based": false,
+    "unniform_naming": false,
+    "likely_automated": false
+  }
+}

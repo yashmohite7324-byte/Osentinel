@@ -1,0 +1,206 @@
+{
+  "sample_id": "Trood.a.exe",
+  "extraction_timestamp": "2025-11-01T12:07:56.075665",
+  "signal_categories": [
+    "static_metadata",
+    "strings_language",
+    "code_stylometry",
+    "build_environment",
+    "runtime_behavior",
+    "network_infrastructure",
+    "operational_artifacts",
+    "external_correlation",
+    "crypto_monetization",
+    "automation_signals"
+  ],
+  "static_metadata": {
+    "file_size": 10568,
+    "mime_type": "application/vnd.microsoft.portable-executable",
+    "yara_matches": [],
+    "packers": [],
+    "has_signature": false
+  },
+  "strings_language": {
+    "strings": [
+      "!This program requires Win32",
+      ".text",
+      "`.data",
+      "IMPORTS",
+      "`imports",
+      "Prelocs",
+      "Rresource",
+      "8WORMu",
+      "SQRVWU1",
+      "]_^ZY[",
+      "<2F@f",
+      "<2F@1",
+      "\\systray.exe",
+      "\\systray.sys",
+      "\\systray.me",
+      "wininit.ini",
+      "Rename",
+      "SYSTRAY.EXE",
+      "\\systray.tmp",
+      "Windows TCP/IP Update",
+      "The system doesn't need an update.",
+      "Latest version of TCP/IP already present.",
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",
+      "MSTCP",
+      "Content-Type:",
+      "multipart/alternative",
+      "multipart/mixed",
+      "text/plain",
+      "text/html",
+      "application/x-msdownload",
+      "Content-Type: multipart/mixed;",
+      "boundary=\"----This_is_created_by_VX_e-mail_service\"",
+      "------This_is_created_by_VX_e-mail_service",
+      "Content-Type: application/x-msdownload;",
+      "name=\"TCPIPUPD.EXE\"",
+      "Content-Transfer-Encoding: base64",
+      "Content-Disposition: attachement;",
+      "filename=\"TCPIPUPD.EXE\"",
+      "------This_is_created_by_VX_e-mail_service--",
+      "I-Worm",
+      "Troodon",
+      "I-Worm.Win9X.Troodon v1.0 Project",
+      "Developed by Clau.",
+      "kernel32.dll",
+      "user32.dll",
+      "RegisterServiceProcess",
+      "GetModuleHandleA",
+      "GetModuleFileNameA",
+      "ExitProcess",
+      "GetLocalTime",
+      "CopyFileA",
+      "WritePrivateProfileStringA",
+      "WinExec",
+      "CreateFileA",
+      "GetFileSize",
+      "VirtualAlloc",
+      "CreateFileMappingA",
+      "MapViewOfFile",
+      "UnmapViewOfFile",
+      "CloseHandle",
+      "DeleteFileA",
+      "VirtualFree",
+      "GetSystemDirectoryA",
+      "lstrcatA",
+      "RegisterClassA",
+      "CreateWindowExA",
+      "ShowWindow",
+      "UpdateWindow",
+      "GetMessageA",
+      "TranslateMessage",
+      "DispatchMessageA",
+      "DefWindowProcA",
+      "SetTimer",
+      "GetForegroundWindow",
+      "GetWindowRect",
+      "MoveWindow",
+      "ExitWindowsEx",
+      "PostQuitMessage",
+      "MessageBoxA",
+      "0#060<0F0O0",
+      "0N1Y1m1",
+      "2%2/2;2M2\\2e2q2",
+      "3,313J3f3y3~3",
+      "4-4D4L4T4Z4b4n4v4~4",
+      "565A5Z5`5f5o5",
+      "6 6:6F6W6]6",
+      "7+7@7J7y7",
+      "7Z8e8",
+      "909:9@9Z9`9l9{9",
+      ":%:+:3:",
+      "0 0&0,02080>0D0J0P0V0\\0b0h0n0t0z0",
+      "wwwwwx",
+      "wwwwx",
+      "wwwwwwwx",
+      "wwwwww"
+    ],
+    "languages_detected": [],
+    "comments_language": null,
+    "hardcoded_paths": [],
+    "emails": [],
+    "phone_numbers": [
+      "0123456789"
+    ],
+    "ip_addresses": [],
+    "urls": [],
+    "locale_markers": {
+      "date_format_hints": [],
+      "currency_symbols": [],
+      "decimal_separators": []
+    }
+  },
+  "code_stylometry": {
+    "naming_conventions": {
+      "camel_case_pct": 0,
+      "snake_case_pct": 0,
+      "hungarian_pct": 0,
+      "all_caps_pct": 0
+    },
+    "code_complexity": {
+      "average_cyclomatic": 1.6266666666666665,
+      "max_complexity": 0,
+      "function_count": 0
+    },
+    "api_usage": {
+      "unique_api_count": 0,
+      "api_names": []
+    },
+    "unique_idioms": [],
+    "has_ast_features": false
+  },
+  "build_environment": {
+    "pdb_paths": [],
+    "build_host": null,
+    "vcs_hash": null,
+    "compile_timezone_hint": null,
+    "dependencies": [],
+    "compiler": "unknown"
+  },
+  "runtime_behavior": {
+    "persistence_methods": [
+      "registry_run_key"
+    ],
+    "syscalls": [],
+    "sandbox_checks": [],
+    "privilege_escalation_attempts": []
+  },
+  "network_infrastructure": {
+    "domains": [],
+    "ip_addresses": [],
+    "tls_ja3": null,
+    "asn": null,
+    "beacon_interval_sec": null
+  },
+  "operational_artifacts": {
+    "time_profile": {},
+    "weekday_activity": [],
+    "debug_artifacts": [],
+    "test_indicators": []
+  },
+  "external_correlation": {
+    "fuzzy_hash": null,
+    "vt_urls": [
+      "https://www.virustotal.com/gui/file/24dd269b4d5edeb591ad992db33553d90f1848f58c06c9dd9fb3cdb4eaf812f5"
+    ],
+    "whois": {},
+    "passive_dns": [],
+    "md5": "47d1f48a127736e63aad709ddc9d81d0",
+    "sha256": "24dd269b4d5edeb591ad992db33553d90f1848f58c06c9dd9fb3cdb4eaf812f5"
+  },
+  "crypto_monetization": {
+    "cryptocurrency_addresses": [],
+    "algorithms": [],
+    "static_keys": false,
+    "iv_reuse": false
+  },
+  "automation_signals": {
+    "repetitive_code": false,
+    "template_based": false,
+    "unniform_naming": true,
+    "likely_automated": true
+  }
+}

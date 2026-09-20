@@ -1,0 +1,119 @@
+{
+  "sample_id": "MadMan.exe",
+  "extraction_timestamp": "2025-10-31T21:23:14.202339",
+  "signal_categories": [
+    "static_metadata",
+    "strings_language",
+    "code_stylometry",
+    "build_environment",
+    "runtime_behavior",
+    "network_infrastructure",
+    "operational_artifacts",
+    "external_correlation",
+    "crypto_monetization",
+    "automation_signals"
+  ],
+  "static_metadata": {
+    "file_size": 2671,
+    "mime_type": "application/x-dosexec",
+    "yara_matches": [],
+    "pe_error": "'Invalid NT Headers signature.'",
+    "packers": [],
+    "has_signature": false
+  },
+  "strings_language": {
+    "strings": [
+      "Goat file (EXE). Size=000003E8h/0000001000d bytes.",
+      "!Infected Program!",
+      "11q7y1",
+      "5y1s721",
+      "8'A5B7O5",
+      "=2A3K\"",
+      "/8'A?K2"
+    ],
+    "languages_detected": [],
+    "comments_language": null,
+    "hardcoded_paths": [],
+    "emails": [],
+    "phone_numbers": [
+      "0000001000"
+    ],
+    "ip_addresses": [],
+    "urls": [],
+    "locale_markers": {
+      "date_format_hints": [],
+      "currency_symbols": [],
+      "decimal_separators": []
+    }
+  },
+  "code_stylometry": {
+    "naming_conventions": {
+      "camel_case_pct": 0,
+      "snake_case_pct": 0,
+      "hungarian_pct": 0,
+      "all_caps_pct": 0
+    },
+    "code_complexity": {
+      "average_cyclomatic": 1.0,
+      "max_complexity": 0,
+      "function_count": 0
+    },
+    "api_usage": {
+      "unique_api_count": 0,
+      "api_names": []
+    },
+    "unique_idioms": [],
+    "has_ast_features": false
+  },
+  "build_environment": {
+    "pdb_paths": [],
+    "build_host": null,
+    "vcs_hash": null,
+    "compile_timezone_hint": null,
+    "dependencies": [],
+    "compiler": "unknown"
+  },
+  "runtime_behavior": {
+    "persistence_methods": [
+      "registry_run_key"
+    ],
+    "syscalls": [],
+    "sandbox_checks": [],
+    "privilege_escalation_attempts": []
+  },
+  "network_infrastructure": {
+    "domains": [],
+    "ip_addresses": [],
+    "tls_ja3": null,
+    "asn": null,
+    "beacon_interval_sec": null
+  },
+  "operational_artifacts": {
+    "time_profile": {},
+    "weekday_activity": [],
+    "debug_artifacts": [],
+    "test_indicators": []
+  },
+  "external_correlation": {
+    "fuzzy_hash": null,
+    "vt_urls": [
+      "https://www.virustotal.com/gui/file/17d81134a5957fb758b9d69a90b033477a991c8b0f107d9864dc790ca37e6a23"
+    ],
+    "whois": {},
+    "passive_dns": [],
+    "md5": "a56d479405b23976f162f3a4a74e48aa",
+    "sha256": "17d81134a5957fb758b9d69a90b033477a991c8b0f107d9864dc790ca37e6a23"
+  },
+  "crypto_monetization": {
+    "cryptocurrency_addresses": [],
+    "algorithms": [],
+    "static_keys": false,
+    "iv_reuse": false
+  },
+  "automation_signals": {
+    "repetitive_code": false,
+    "template_based": false,
+    "unniform_naming": true,
+    "likely_automated": true
+  }
+}

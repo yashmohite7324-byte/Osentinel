@@ -1,0 +1,114 @@
+{
+  "sample_id": "FlashKiller.exe",
+  "extraction_timestamp": "2025-11-01T01:48:39.893026",
+  "signal_categories": [
+    "static_metadata",
+    "strings_language",
+    "code_stylometry",
+    "build_environment",
+    "runtime_behavior",
+    "network_infrastructure",
+    "operational_artifacts",
+    "external_correlation",
+    "crypto_monetization",
+    "automation_signals"
+  ],
+  "static_metadata": {
+    "file_size": 4096,
+    "mime_type": "application/vnd.microsoft.portable-executable",
+    "yara_matches": [],
+    "packers": [],
+    "has_signature": false
+  },
+  "strings_language": {
+    "strings": [
+      "This program must be run under Win32",
+      ".reloc",
+      "SQQQh",
+      "filler",
+      "0)0@0X0a0"
+    ],
+    "languages_detected": [],
+    "comments_language": null,
+    "hardcoded_paths": [],
+    "emails": [],
+    "phone_numbers": [],
+    "ip_addresses": [],
+    "urls": [],
+    "locale_markers": {
+      "date_format_hints": [],
+      "currency_symbols": [],
+      "decimal_separators": []
+    }
+  },
+  "code_stylometry": {
+    "naming_conventions": {
+      "camel_case_pct": 0,
+      "snake_case_pct": 0,
+      "hungarian_pct": 0,
+      "all_caps_pct": 0
+    },
+    "code_complexity": {
+      "average_cyclomatic": 1.3,
+      "max_complexity": 0,
+      "function_count": 0
+    },
+    "api_usage": {
+      "unique_api_count": 0,
+      "api_names": []
+    },
+    "unique_idioms": [],
+    "has_ast_features": false
+  },
+  "build_environment": {
+    "pdb_paths": [],
+    "build_host": null,
+    "vcs_hash": null,
+    "compile_timezone_hint": null,
+    "dependencies": [],
+    "compiler": "borland:pascal"
+  },
+  "runtime_behavior": {
+    "persistence_methods": [
+      "registry_run_key"
+    ],
+    "syscalls": [],
+    "sandbox_checks": [],
+    "privilege_escalation_attempts": []
+  },
+  "network_infrastructure": {
+    "domains": [],
+    "ip_addresses": [],
+    "tls_ja3": null,
+    "asn": null,
+    "beacon_interval_sec": null
+  },
+  "operational_artifacts": {
+    "time_profile": {},
+    "weekday_activity": [],
+    "debug_artifacts": [],
+    "test_indicators": []
+  },
+  "external_correlation": {
+    "fuzzy_hash": null,
+    "vt_urls": [
+      "https://www.virustotal.com/gui/file/353df4f186c06a626373b0978d15ec6357510fd0d4ac54b63217b37142ab52d3"
+    ],
+    "whois": {},
+    "passive_dns": [],
+    "md5": "331973644859575a72f7b08ba0447f2a",
+    "sha256": "353df4f186c06a626373b0978d15ec6357510fd0d4ac54b63217b37142ab52d3"
+  },
+  "crypto_monetization": {
+    "cryptocurrency_addresses": [],
+    "algorithms": [],
+    "static_keys": false,
+    "iv_reuse": false
+  },
+  "automation_signals": {
+    "repetitive_code": false,
+    "template_based": false,
+    "unniform_naming": true,
+    "likely_automated": true
+  }
+}

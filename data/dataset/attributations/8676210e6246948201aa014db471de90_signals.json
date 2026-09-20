@@ -1,0 +1,169 @@
+{
+  "sample_id": "8676210e6246948201aa014db471de90",
+  "extraction_timestamp": "2025-11-01T13:48:29.378876",
+  "signal_categories": [
+    "static_metadata",
+    "strings_language",
+    "code_stylometry",
+    "build_environment",
+    "runtime_behavior",
+    "network_infrastructure",
+    "operational_artifacts",
+    "external_correlation",
+    "crypto_monetization",
+    "automation_signals"
+  ],
+  "static_metadata": {
+    "file_size": 6176,
+    "mime_type": "application/vnd.microsoft.portable-executable",
+    "yara_matches": [],
+    "packers": [
+      "UPX"
+    ],
+    "has_signature": false
+  },
+  "strings_language": {
+    "strings": [
+      "!This program cannot be run in DOS mode.",
+      "t(x1%Sr",
+      "fj]He",
+      "=W}$h>",
+      "u<|(1",
+      ",G\"0;0",
+      "|@-vr",
+      "Gvx/[G",
+      "MIw~f#n#F",
+      "?\"u#j\"",
+      "<0E}r",
+      "mslaugh.exe",
+      "I dedicate this p",
+      "u r strain",
+      "ANG3L - hop\fye",
+      "enjoy",
+      "g\fself andKont forge",
+      "tN(promTe",
+      "/DAY !",
+      "\fMARB3",
+      "EOWWv",
+      "~'?bB",
+      "kimble.Q",
+      "iocSOFTK",
+      "o_\\&\\Curr",
+      "*\\Ru.",
+      ",8HP`4M",
+      "; \fUK",
+      "8@HT`M",
+      "4Mhp|",
+      "ExitProcessThread",
+      "GetComm",
+      "LineA",
+      "LastEr=r",
+      "Moduln",
+      "RtlUnwi%",
+      "m7hMu",
+      "x3S+ep",
+      "lRege{",
+      "=Key\f&",
+      "SvValue",
+      "prQtf",
+      "A[(t[h2n",
+      "okui3_",
+      ":gp\f:",
+      "EA*PEL",
+      "KERNEL32.DLL",
+      "ADVAPI32.DLL",
+      "CRTDLL.DLL",
+      "WININET.DLL",
+      "WS2_32.DLL",
+      "LoadLibraryA",
+      "GetProcAddress",
+      "ExitProcess",
+      "RegCloseKey",
+      "InternetGetConnectedState"
+    ],
+    "languages_detected": [],
+    "comments_language": null,
+    "hardcoded_paths": [],
+    "emails": [],
+    "phone_numbers": [],
+    "ip_addresses": [],
+    "urls": [],
+    "locale_markers": {
+      "date_format_hints": [],
+      "currency_symbols": [
+        "$"
+      ],
+      "decimal_separators": []
+    }
+  },
+  "code_stylometry": {
+    "naming_conventions": {
+      "camel_case_pct": 0,
+      "snake_case_pct": 0,
+      "hungarian_pct": 0,
+      "all_caps_pct": 0
+    },
+    "code_complexity": {
+      "average_cyclomatic": 17.450000000000003,
+      "max_complexity": 0,
+      "function_count": 0
+    },
+    "api_usage": {
+      "unique_api_count": 0,
+      "api_names": []
+    },
+    "unique_idioms": [],
+    "has_ast_features": false
+  },
+  "build_environment": {
+    "pdb_paths": [],
+    "build_host": null,
+    "vcs_hash": null,
+    "compile_timezone_hint": null,
+    "dependencies": [],
+    "compiler": "visualstudio:unknown"
+  },
+  "runtime_behavior": {
+    "persistence_methods": [
+      "registry_run_key"
+    ],
+    "syscalls": [],
+    "sandbox_checks": [],
+    "privilege_escalation_attempts": []
+  },
+  "network_infrastructure": {
+    "domains": [],
+    "ip_addresses": [],
+    "tls_ja3": null,
+    "asn": null,
+    "beacon_interval_sec": null
+  },
+  "operational_artifacts": {
+    "time_profile": {},
+    "weekday_activity": [],
+    "debug_artifacts": [],
+    "test_indicators": []
+  },
+  "external_correlation": {
+    "fuzzy_hash": null,
+    "vt_urls": [
+      "https://www.virustotal.com/gui/file/2e481059b9bc9686c676d69a80202eed5022c9a53ecd8cac215e70c601dd7fdc"
+    ],
+    "whois": {},
+    "passive_dns": [],
+    "md5": "8676210e6246948201aa014db471de90",
+    "sha256": "2e481059b9bc9686c676d69a80202eed5022c9a53ecd8cac215e70c601dd7fdc"
+  },
+  "crypto_monetization": {
+    "cryptocurrency_addresses": [],
+    "algorithms": [],
+    "static_keys": false,
+    "iv_reuse": false
+  },
+  "automation_signals": {
+    "repetitive_code": false,
+    "template_based": false,
+    "unniform_naming": true,
+    "likely_automated": true
+  }
+}

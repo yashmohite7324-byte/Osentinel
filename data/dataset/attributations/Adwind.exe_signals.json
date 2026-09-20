@@ -1,0 +1,131 @@
+{
+  "sample_id": "Adwind.exe",
+  "extraction_timestamp": "2025-11-01T03:39:09.747913",
+  "signal_categories": [
+    "static_metadata",
+    "strings_language",
+    "code_stylometry",
+    "build_environment",
+    "runtime_behavior",
+    "network_infrastructure",
+    "operational_artifacts",
+    "external_correlation",
+    "crypto_monetization",
+    "automation_signals"
+  ],
+  "static_metadata": {
+    "file_size": 5621,
+    "mime_type": "application/java-archive",
+    "yara_matches": [],
+    "packers": [],
+    "has_signature": false
+  },
+  "strings_language": {
+    "strings": [
+      "META-INF/",
+      "META-INF/MANIFEST.MF",
+      "xfzzzf",
+      "2065.18",
+      "p%7VO",
+      "9Rovg",
+      "2PTh+",
+      "*xt;_D",
+      "$zxi{s(",
+      "<e/jApX",
+      "^uV@N",
+      "O=$V,",
+      "fT^gZ",
+      "r,/ca",
+      "*}+._$",
+      "o_yQa-",
+      "sFm\"tDd(b",
+      "GeUb)z6K",
+      "IIIIiIiIIi.classuSko",
+      "!GY96",
+      "iiiiIiIIIi.class}T",
+      "jDJoG",
+      "~F~B5<}",
+      "IiIiIIiiIi.class",
+      "K(H(JX",
+      "2F0)`JF",
+      "10/10/",
+      "10/10/10/",
+      "10/10/10/iiiiIiIIIi.class}TKS",
+      "xnSyH5",
+      "<o:dyE",
+      "2)e_d",
+      "META-INF/",
+      "META-INF/MANIFEST.MFPK",
+      "2065.18PK",
+      "IIIIiIiIIi.classPK",
+      "iiiiIiIIIi.classPK",
+      "IiIiIIiiIi.classPK",
+      "10/PK",
+      "10/10/PK",
+      "10/10/10/PK",
+      "10/10/10/iiiiIiIIIi.classPK",
+      "Obfuscation by Allatori Obfuscator http://www.allatori.com"
+    ],
+    "languages_detected": [],
+    "comments_language": null,
+    "hardcoded_paths": [],
+    "emails": [],
+    "phone_numbers": [],
+    "ip_addresses": [],
+    "urls": [
+      "http://www.allatori.com"
+    ],
+    "locale_markers": {
+      "date_format_hints": [],
+      "currency_symbols": [
+        "$",
+        "$",
+        "$"
+      ],
+      "decimal_separators": []
+    }
+  },
+  "runtime_behavior": {
+    "persistence_methods": [
+      "registry_run_key"
+    ],
+    "syscalls": [],
+    "sandbox_checks": [],
+    "privilege_escalation_attempts": []
+  },
+  "network_infrastructure": {
+    "domains": [],
+    "ip_addresses": [],
+    "tls_ja3": null,
+    "asn": null,
+    "beacon_interval_sec": null
+  },
+  "operational_artifacts": {
+    "time_profile": {},
+    "weekday_activity": [],
+    "debug_artifacts": [],
+    "test_indicators": []
+  },
+  "external_correlation": {
+    "fuzzy_hash": null,
+    "vt_urls": [
+      "https://www.virustotal.com/gui/file/bbc572cced7c94d63a7208f4aba4ed20d1350bef153b099035a86c95c8d96d4a"
+    ],
+    "whois": {},
+    "passive_dns": [],
+    "md5": "fe537a3346590c04d81d357e3c4be6e8",
+    "sha256": "bbc572cced7c94d63a7208f4aba4ed20d1350bef153b099035a86c95c8d96d4a"
+  },
+  "crypto_monetization": {
+    "cryptocurrency_addresses": [],
+    "algorithms": [],
+    "static_keys": false,
+    "iv_reuse": false
+  },
+  "automation_signals": {
+    "repetitive_code": false,
+    "template_based": false,
+    "unniform_naming": false,
+    "likely_automated": false
+  }
+}

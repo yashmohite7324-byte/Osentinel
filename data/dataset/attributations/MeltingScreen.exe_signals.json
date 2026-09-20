@@ -1,0 +1,204 @@
+{
+  "sample_id": "MeltingScreen.exe",
+  "extraction_timestamp": "2025-10-31T22:28:00.117219",
+  "signal_categories": [
+    "static_metadata",
+    "strings_language",
+    "code_stylometry",
+    "build_environment",
+    "runtime_behavior",
+    "network_infrastructure",
+    "operational_artifacts",
+    "external_correlation",
+    "crypto_monetization",
+    "automation_signals"
+  ],
+  "static_metadata": {
+    "file_size": 17920,
+    "mime_type": "application/vnd.microsoft.portable-executable",
+    "yara_matches": [],
+    "packers": [],
+    "has_signature": false
+  },
+  "strings_language": {
+    "strings": [
+      "!This program cannot be run in DOS mode.",
+      ".text",
+      "`.data",
+      ".idata",
+      "@.rsrc",
+      "@.reloc",
+      "MSVBVM50.DLL",
+      "\", \"StMeltingScreen",
+      "FormMeltingScreen",
+      "Melting Screen",
+      "Form1",
+      "Timer1",
+      "VB5DE.DLL",
+      "MeltingScreen",
+      "MeltingScreen",
+      "MeltingScreen",
+      "FormMeltingScreen",
+      "MeltingScreen",
+      "I:\\DevStudio\\VB\\VB5.OLB",
+      "Timer1",
+      "Form_Load",
+      "search",
+      "CreateKey",
+      "SaveSettingString",
+      "SetValue",
+      "AlreadySendMails",
+      "SendMail",
+      "GrabScreen",
+      "Sleep",
+      "DeleteTitlebar",
+      "RegGetString",
+      "kernel32",
+      "GetWindowsDirectoryA",
+      "SetCurrentDirectoryA",
+      "CopyFileA",
+      "user32",
+      "GetDesktopWindow",
+      "GetDC",
+      "gdi32",
+      "BitBlt",
+      "ReleaseDC",
+      "OpenProcess",
+      "GetExitCodeProcess",
+      "GetFileTime",
+      "kernel32.dll",
+      "CreateFileA",
+      "CloseHandle",
+      "SetFileTime",
+      "GetWindowLongA",
+      "SetWindowLongA",
+      "advapi32.dll",
+      "RegCreateKeyA",
+      "RegSetValueExA",
+      "RegOpenKeyExA",
+      "RegQueryValueExA",
+      "RegCloseKey",
+      "VBA5.DLL",
+      "strPath",
+      "strValue",
+      "strData",
+      "Milliseconds",
+      "Do_Form",
+      "ShowIt",
+      "hInKey",
+      "subkey",
+      "valname",
+      "MSVBVM50.DLL",
+      "MethCallEngine",
+      "EVENT_SINK_AddRef",
+      "DllFunctionCall",
+      "EVENT_SINK_Release",
+      "EVENT_SINK_QueryInterface",
+      "__vbaExceptHandler",
+      "0 0&0,02080>0D0J0P0V0\\0b0h0n0u0",
+      "7 7(70787@7H7P7X7`7h7p7x7",
+      ":$:,:8:<:H:L:P:T:X:\\:`:d:h:l:p:t:x:|:",
+      "; ;$;(;,;0;4;8;<;@;D;H;L;P;T;X;\\;`;d;h;l;p;|;",
+      "=&=+=:=?=N=S=b=g=v={=",
+      "> >(>0>H>L>P>T>X>\\>`>d>h>l>p>t>$?4?8?<?",
+      "4080@0D0",
+      "1 1(1-181=1l1p1x1}1",
+      "2$2(20252@2E2`2d2l2q2|2",
+      "30343<3A3L3Q3l3p3x3}3",
+      "4(4,44494D4I4|4",
+      "5 5$5,515<5A5d5h5p5u5",
+      "5x:|:",
+      ": ;D;h;",
+      "<D<l<",
+      "=D>|>"
+    ],
+    "languages_detected": [],
+    "comments_language": null,
+    "hardcoded_paths": [],
+    "emails": [],
+    "phone_numbers": [],
+    "ip_addresses": [],
+    "urls": [],
+    "locale_markers": {
+      "date_format_hints": [],
+      "currency_symbols": [
+        "$",
+        "$",
+        "$",
+        "$",
+        "$"
+      ],
+      "decimal_separators": []
+    }
+  },
+  "code_stylometry": {
+    "naming_conventions": {
+      "camel_case_pct": 0,
+      "snake_case_pct": 0,
+      "hungarian_pct": 0,
+      "all_caps_pct": 0
+    },
+    "code_complexity": {
+      "average_cyclomatic": 3.4333333333333336,
+      "max_complexity": 0,
+      "function_count": 0
+    },
+    "api_usage": {
+      "unique_api_count": 0,
+      "api_names": []
+    },
+    "unique_idioms": [],
+    "has_ast_features": false
+  },
+  "build_environment": {
+    "pdb_paths": [],
+    "build_host": null,
+    "vcs_hash": null,
+    "compile_timezone_hint": null,
+    "dependencies": [],
+    "compiler": "unknown"
+  },
+  "runtime_behavior": {
+    "persistence_methods": [
+      "registry_run_key"
+    ],
+    "syscalls": [],
+    "sandbox_checks": [],
+    "privilege_escalation_attempts": []
+  },
+  "network_infrastructure": {
+    "domains": [],
+    "ip_addresses": [],
+    "tls_ja3": null,
+    "asn": null,
+    "beacon_interval_sec": null
+  },
+  "operational_artifacts": {
+    "time_profile": {},
+    "weekday_activity": [],
+    "debug_artifacts": [],
+    "test_indicators": []
+  },
+  "external_correlation": {
+    "fuzzy_hash": null,
+    "vt_urls": [
+      "https://www.virustotal.com/gui/file/9d355e4f9a51536b05269f696b304859155985957ba95eb575f3f38c599d913c"
+    ],
+    "whois": {},
+    "passive_dns": [],
+    "md5": "4784e42c3b15d1a141a5e0c8abc1205c",
+    "sha256": "9d355e4f9a51536b05269f696b304859155985957ba95eb575f3f38c599d913c"
+  },
+  "crypto_monetization": {
+    "cryptocurrency_addresses": [],
+    "algorithms": [],
+    "static_keys": false,
+    "iv_reuse": false
+  },
+  "automation_signals": {
+    "repetitive_code": false,
+    "template_based": false,
+    "unniform_naming": true,
+    "likely_automated": true
+  }
+}

@@ -1,0 +1,109 @@
+# OSentinel AI configuration.
+# Any field can be overridden by an environment variable, e.g.
+#   OSENTINEL_DRY_RUN=false OSENTINEL_PORT=9000 python run.py
+
+# How often each collector samples the operating system, in seconds.
+process_interval: 0.2
+network_interval: 3.0
+resource_interval: 2.0
+fim_interval: 30.0
+
+# Walking /proc/<pid>/fd is expensive, so only the busiest processes get the
+# full descriptor and socket count each cycle.
+deep_scan_top_n: 25
+
+# File integrity monitoring. Keep the set small and high-value; hashing a whole
+# filesystem every 30 seconds is how monitoring tools become the incident.
+fim_max_files: 400
+watch_paths:
+  - /etc/passwd
+  - /etc/shadow
+  - /etc/sudoers
+  - /etc/sudoers.d
+  - /etc/hosts
+  - /etc/crontab
+  - /etc/cron.d
+  - ~/.ssh
+  - ~/.bashrc
+  - ~/.profile
+  # Sandbox used by simulate.py so the demo exercises file-integrity rules.
+  - data/sandbox
+
+# Detection tuning.
+rules_file: rules/rules.yaml
+baseline_warmup: 25        # samples to learn before the baseline may alert
+z_threshold: 3.5           # standard deviations from the learned mean
+contamination: 0.02        # expected outlier fraction for the anomaly model
+correlation_window_s: 180  # detections on one entity fold into one incident
+
+# Layer 2b - trained classifier (the distilled model). A small logistic model
+# over interpretable command-line features, trained offline on a labelled
+# corpus. The corpus is synthesised and labelled by an LLM teacher when a key is
+# present, or from built-in templates when not; either way the trained student
+# runs locally at line rate with no API calls. If no model file exists on
+# startup the agent builds one from the synthetic corpus automatically. Retrain
+# (optionally with LLM enrichment) from the console or POST /api/classifier/train.
+classifier: true
+classifier_model_path: data/models/classifier.json
+classifier_corpus_path: data/models/corpus.jsonl
+classifier_fire_threshold: 0.6      # p(malicious) needed to raise a malicious verdict
+classifier_train_on_start: true
+
+# Layer 2 - similarity. Scores command lines by how close they are to known
+# attack tooling and how unlike this host's own normal workload. Uses a
+# pretrained sentence-transformer if one is installed, otherwise hashed
+# character n-grams; encoder: auto | transformer | hashed.
+semantic: true
+semantic_encoder: auto
+semantic_threshold: 0.62   # similarity to a malicious exemplar before it can fire
+semantic_margin: 0.10      # how far it must also beat this host's normal by
+
+# Layer 3 - sequence. Attack chains as ordered stages, plus a Markov model of
+# stage transitions learned from this host.
+sequence: true
+sequence_window_s: 600.0
+sequence_surprise_bits: 4.5   # rarity, in bits, before a transition is reported
+sequence_markov_warmup: 40
+
+# Layer 4 - LLM adjudication. Runs only on detections inside the ambiguous
+# band, off the detection thread, with a cache and an hourly call cap. It can
+# shift an existing score by at most llm_max_shift and can never create one.
+# Set llm_backend to 'local' to use Ollama, llama.cpp or vLLM instead of the
+# hosted API - required if telemetry must not leave the network.
+llm_judge: true
+llm_backend: local        # anthropic | local
+llm_model: llama3.1
+llm_local_url: http://127.0.0.1:11434/v1
+llm_band_low: 45.0            # below this, not worth a call
+llm_band_high: 88.0           # above this, already conclusive
+llm_max_shift: 20.0
+llm_calls_per_hour: 60
+
+# Response policy. dry_run is the safe default: decisions are computed, logged
+# and shown, but nothing is signalled. Start it with --enforce when you mean it.
+dry_run: true
+suspend_at: 80.0           # incident score that triggers SIGSTOP
+terminate_at: 95.0         # incident score that triggers SIGTERM then SIGKILL
+quarantine_dir: data/quarantine
+protected_processes: []    # names added to the built-in never-touch list
+
+# AI triage. Set ANTHROPIC_API_KEY to get model-written analyst notes; without
+# a key the deterministic summariser is used instead.
+ai_triage: true
+triage_min_score: 65.0
+
+# Conversational assistant. It reads live host state through read-only tools and
+# proposes containment for a human to confirm; it has no tool that can act. With
+# no ANTHROPIC_API_KEY it answers from the detectors and the prevention
+# playbooks instead of going quiet.
+assistant: true
+assistant_model: llama3.1
+assistant_max_tool_hops: 5    # investigation steps per question
+assistant_history_turns: 12   # turns kept verbatim before older ones are summarised
+
+# Runtime.
+database: data/osentinel.db
+queue_size: 5000
+retention_s: 86400
+host: 127.0.0.1
+port: 8787

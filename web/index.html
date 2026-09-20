@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OSentinel — Secure Dashboard</title>
+  
+  <!-- React & ReactDOM -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <!-- Babel -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    :root {
+      --bg-color: #0b0c10;
+      --panel-bg: rgba(22, 24, 29, 0.6);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --accent: #4ade80;
+      --accent-glow: rgba(74, 222, 128, 0.2);
+    }
+    
+    body {
+      background-color: var(--bg-color);
+      background-image: 
+        radial-gradient(circle at 20% 40%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 80% 60%, rgba(168, 85, 247, 0.1) 0%, transparent 50%);
+      color: #f8fafc;
+      font-family: 'Inter', system-ui, sans-serif;
+      overflow: hidden; /* App handles scrolling */
+    }
+
+    .glass-panel {
+      background: var(--panel-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--glass-border);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+    }
+
+    .glass-input {
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #fff;
+    }
+    .glass-input:focus {
+      outline: none;
+      border-color: #6366f1;
+      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+    }
+    
+    .gauge-arc {
+      stroke: url(#gaugeGradient);
+      stroke-width: 14;
+      stroke-linecap: round;
+      fill: none;
+      stroke-dasharray: 283;
+      stroke-dashoffset: 80;
+      transition: stroke-dashoffset 1s ease-out;
+    }
+
+    .pulse-band {
+      background: repeating-linear-gradient(90deg, transparent 0 calc(25% - 1px), rgba(255,255,255,0.05) calc(25% - 1px) 25%);
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef, useMemo } = React;
+
+    // --- UTILS & FETCH ---
+    const getToken = () => localStorage.getItem("osentinel_token");
+    const setToken = (t) => t ? localStorage.setItem("osentinel_token", t) : localStorage.removeItem("osentinel_token");
+
+    const apiFetch = async (path, options = {}) => {
+      const headers = { "Content-Type": "application/json", ...options.headers };
+      const token = getToken();
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      
+      const res = await fetch(path, { ...options, headers });
+      if (res.status === 401) {
+        setToken(null);
+        window.location.reload();
+        throw new Error("Unauthorized");
+      }
+      return res;
+    };
+
+    // --- COMPONENTS ---
+
+    // Safe Icon Component to prevent React crashes when Lucide mutates DOM
+    const Icon = ({ name, className = "", onClick, title }) => {
+      const iconRef = useRef(null);
+      useEffect(() => {
+        if (window.lucide && iconRef.current) {
+          window.lucide.createIcons({
+            attrs: { class: className },
+            nameAttr: 'data-lucide',
+            root: iconRef.current
+          });
+        }
+      }, [name, className]);
+      
+      return <span ref={iconRef} onClick={onClick} title={title} className="inline-flex"><i data-lucide={name}></i></span>;
+    };
+
+    // 1. Login Screen (matches Image 2)
+    const LoginScreen = ({ onLogin }) => {
+      const [email, setEmail] = useState("asus f15");
+      const [password, setPassword] = useState("admin");
+      const [error, setError] = useState("");
+
+      const handleSubmit = async (e) => {
+        e.preventDefault();
+        try {
+          const params = new URLSearchParams();
+          params.append("username", email);
+          params.append("password", password);
+          const r = await fetch("/api/token", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: params
+          });
+          if (!r.ok) throw new Error("Invalid credentials");
+          const data = await r.json();
+          onLogin(data.access_token);
+        } catch (err) {
+          setError(err.message);
+        }
+      };
+
+      return (
+        <div className="flex h-screen w-full items-center justify-center relative">
+          <div className="absolute top-6 left-6 flex items-center gap-3">
+             <Icon name="shield" className="text-indigo-400 w-8 h-8" />
+             <span className="text-xl font-bold tracking-tight">OSentinel</span>
+          </div>
+          
+          <div className="glass-panel p-10 rounded-2xl w-[420px] flex flex-col items-center z-10 relative">
+            <Icon name="shield-check" className="text-indigo-400 w-12 h-12 mb-4" />
+            <h2 className="text-xl font-semibold mb-2">Sign In to Your OSentinel Dashboard</h2>
+            {error && <p className="text-red-400 text-sm mb-4">{error}</p>}
+            
+            <form onSubmit={handleSubmit} className="w-full flex flex-col gap-4 mt-6">
+              <div className="relative">
+                <Icon name="mail" className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" />
+                <input type="text" placeholder="Email Address / Username" value={email} onChange={e=>setEmail(e.target.value)}
+                  className="glass-input w-full rounded-xl py-3 pl-10 pr-4 text-sm" />
+              </div>
+              <div className="relative">
+                <Icon name="key" className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" />
+                <input type="password" placeholder="Password" value={password} onChange={e=>setPassword(e.target.value)}
+                  className="glass-input w-full rounded-xl py-3 pl-10 pr-10 text-sm" />
+                <Icon name="eye-off" className="absolute right-3 top-3.5 w-5 h-5 text-gray-400 cursor-pointer" />
+              </div>
+              
+              <button type="submit" className="mt-4 w-full bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-medium py-3 rounded-xl hover:from-indigo-400 hover:to-purple-400 transition-all shadow-lg shadow-indigo-500/25">
+                Sign In
+              </button>
+            </form>
+            
+            <div className="w-full flex justify-between mt-6 text-sm text-gray-400">
+              <a href="#" className="hover:text-white transition-colors">Forgot Password?</a>
+              <a href="#" className="hover:text-white transition-colors">Create an Account</a>
+            </div>
+          </div>
+
+          <div className="absolute right-32 top-1/2 -translate-y-1/2 flex flex-col items-center opacity-60">
+             <Icon name="network" className="w-16 h-16 text-indigo-300 mb-4 opacity-50" />
+             <span className="text-lg text-indigo-200">Stay in Control</span>
+          </div>
+        </div>
+      );
+    };
+
+    // 2. Chatbot (matches Image 1 bottom right)
+    const Chatbot = ({ session, hostState }) => {
+      const [isOpen, setIsOpen] = useState(false);
+      const [messages, setMessages] = useState([]);
+      const [input, setInput] = useState("");
+      const [loading, setLoading] = useState(false);
+      const scrollRef = useRef();
+
+      useEffect(() => {
+        if(scrollRef.current && isOpen) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      }, [messages, isOpen]);
+
+      useEffect(() => {
+        const handleAnalyze = (e) => {
+          setIsOpen(true);
+          setInput(`Analyze incident ${e.detail}`);
+        };
+        document.addEventListener("analyze_incident", handleAnalyze);
+        return () => document.removeEventListener("analyze_incident", handleAnalyze);
+      }, []);
+
+      const sendMessage = async (e) => {
+        if(e) e.preventDefault();
+        if(!input.trim() || loading) return;
+        
+        const userMsg = input.trim();
+        setInput("");
+        setMessages(p => [...p, { role: "user", text: userMsg }]);
+        setLoading(true);
+        
+        try {
+          const res = await apiFetch("/api/assistant/chat", {
+            method: "POST",
+            body: JSON.stringify({ session, message: userMsg })
+          });
+          if (!res.ok) {
+            const errText = await res.text();
+            throw new Error(`Server returned ${res.status}: ${errText}`);
+          }
+          const data = await res.json();
+          setMessages(p => [...p, { role: "ai", text: data.reply || "No reply from AI." }]);
+        } catch(err) {
+          console.error(err);
+          setMessages(p => [...p, { role: "ai", text: "AI Error: " + err.message }]);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      if (!isOpen) {
+        return (
+          <div 
+            onClick={() => setIsOpen(true)}
+            className="fixed bottom-6 right-6 w-14 h-14 bg-indigo-600 rounded-full flex items-center justify-center cursor-pointer shadow-[0_4px_20px_rgba(79,70,229,0.5)] hover:bg-indigo-500 transition-all z-50 animate-bounce"
+          >
+            <Icon name="message-square" className="w-6 h-6 text-white" />
+          </div>
+        );
+      }
+
+      return (
+        <div className="fixed bottom-6 right-6 w-80 lg:w-96 glass-panel rounded-xl overflow-hidden flex flex-col z-50 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.8)] border border-indigo-500/30">
+          <div className="bg-white/5 border-b border-white/10 p-3 flex justify-between items-center">
+            <span className="text-sm font-semibold text-gray-200">Ask the analyst</span>
+            <div className="flex gap-3 text-gray-400 items-center">
+              <Icon name="trash-2" onClick={() => setMessages([])} className="w-4 h-4 cursor-pointer hover:text-red-400" title="Clear Chat" />
+              <div className="w-px h-4 bg-white/20 mx-1"></div>
+              <Icon name="minus" onClick={() => setIsOpen(false)} className="w-4 h-4 cursor-pointer hover:text-white" />
+              <Icon name="x" onClick={() => setIsOpen(false)} className="w-4 h-4 cursor-pointer hover:text-white" />
+            </div>
+          </div>
+          
+          <div className="h-[350px] overflow-y-auto p-4 flex flex-col gap-4" ref={scrollRef}>
+            {messages.length === 0 && (
+              <div className="flex flex-col gap-2 mt-4">
+                <div className="text-xs text-gray-400 text-center mb-4">Start a conversation to analyze incidents.</div>
+                <button onClick={() => setInput("What is the highest risk incident?")} className="text-xs bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg p-3 text-left text-indigo-300 transition-colors">"What is the highest risk incident?"</button>
+                <button onClick={() => setInput("Summarize the most recent system anomalies.")} className="text-xs bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg p-3 text-left text-indigo-300 transition-colors">"Summarize the most recent system anomalies."</button>
+                <button onClick={() => setInput("Are there any suspicious network connections?")} className="text-xs bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg p-3 text-left text-indigo-300 transition-colors">"Are there any suspicious network connections?"</button>
+              </div>
+            )}
+            {messages.map((m, i) => (
+              <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                {m.role === 'ai' && <Icon name="shield" className="w-5 h-5 text-indigo-400 mr-2 mt-1 flex-shrink-0" />}
+                <div className={`p-3 rounded-xl text-[13px] max-w-[85%] leading-relaxed ${m.role === 'user' ? 'bg-indigo-500/20 border border-indigo-500/30' : 'bg-white/5 border border-white/10 text-gray-300'}`}>
+                  {m.text}
+                </div>
+              </div>
+            ))}
+            {loading && (
+              <div className="flex justify-start">
+                 <Icon name="shield" className="w-5 h-5 text-indigo-400 mr-2 mt-1 animate-pulse flex-shrink-0" />
+                 <div className="p-3 rounded-xl text-xs bg-white/5 border border-white/10 text-gray-400">Thinking...</div>
+              </div>
+            )}
+          </div>
+          
+          <form onSubmit={sendMessage} className="p-3 border-t border-white/10 bg-black/20 flex items-center gap-2">
+            <input type="text" placeholder="Type a message..." value={input} onChange={e=>setInput(e.target.value)}
+              className="bg-transparent text-sm w-full outline-none text-gray-200 placeholder-gray-500" />
+            <button type="submit" className="text-indigo-400 hover:text-indigo-300 transition-colors">
+              <Icon name="send" className="w-5 h-5" />
+            </button>
+          </form>
+        </div>
+      );
+    };
+
+    // 3. Dashboard Grid
+    const Dashboard = ({ state, logout }) => {
+      const [topTab, setTopTab] = useState("Signals");
+      const [bottomTab, setBottomTab] = useState("Response log");
+
+      // Compute live risk score instead of relying on stale posture
+      const riskScore = useMemo(() => {
+        const incidents = state?.incidents || [];
+        const top = incidents.length > 0 ? incidents[0].score : 0;
+        const active = incidents.filter(i => i.score >= 40);
+        return Math.min(100.0, top + Math.min(20.0, 3.0 * Math.max(0, active.length - 1)));
+      }, [state?.incidents]);
+      
+      return (
+        <div className="flex flex-col h-screen overflow-hidden text-gray-300">
+          {/* Header */}
+          <header className="glass-panel border-b-0 h-14 flex items-center px-6 justify-between flex-shrink-0 relative z-10">
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-2 text-white">
+                <Icon name="shield" className="w-6 h-6 text-indigo-400" />
+                <span className="font-bold text-lg tracking-tight">OSentinel</span>
+              </div>
+              <div className="flex items-center gap-3 text-xs bg-white/5 px-3 py-1 rounded border border-white/10">
+                <span className="font-medium text-gray-200">{state?.status?.host?.hostname || 'ASUS'}</span>
+                <span className="text-gray-500">|</span>
+                <span>{state?.status?.host?.platform || 'Windows 11'} {state?.status?.host?.arch || 'AMD64'}</span>
+                <span className="text-gray-500">|</span>
+                <span>{state?.status?.host?.cpus || 12} CPU / {state?.status?.host?.memory_gb || 7.7} GB</span>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-4 text-xs font-medium">
+              <div className="flex items-center gap-2 text-emerald-400">
+                <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_#34d399]"></div>
+                Live
+              </div>
+              <div className="border border-orange-500/50 text-orange-400 bg-orange-500/10 px-3 py-1 rounded">
+                Response: Dry Run
+              </div>
+              <button onClick={logout} className="hover:text-white bg-white/5 border border-white/10 px-3 py-1 rounded transition-colors">
+                Logout
+              </button>
+            </div>
+          </header>
+          
+          {/* Main Grid */}
+          <div className="flex flex-1 overflow-hidden">
+            {/* Left Column (Risk & Incidents) */}
+            <div className="w-[320px] flex flex-col border-r border-white/5 bg-black/20">
+              <div className="p-6 border-b border-white/5 flex flex-col items-center">
+                
+                {/* SVG Gauge */}
+                <div className="relative w-48 h-28 flex justify-center overflow-hidden">
+                  <svg viewBox="0 0 100 50" className="w-full h-full overflow-visible">
+                    <defs>
+                      <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="#10b981" />
+                        <stop offset="50%" stopColor="#f59e0b" />
+                        <stop offset="100%" stopColor="#ef4444" />
+                      </linearGradient>
+                    </defs>
+                    <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="14" strokeLinecap="round" />
+                    <path className="gauge-arc" d="M 10 50 A 40 40 0 0 1 90 50" style={{ strokeDashoffset: 125 - (riskScore / 100) * 125 }} />
+                  </svg>
+                  <div className="absolute bottom-2 flex items-baseline gap-1">
+                     <span className={`text-4xl font-bold ${riskScore > 80 ? 'text-red-400' : riskScore > 40 ? 'text-orange-400' : 'text-emerald-400'}`}>
+                       {Math.round(riskScore)}
+                     </span>
+                     <span className="text-gray-500 text-sm">/ 100</span>
+                  </div>
+                </div>
+                
+                <p className="text-sm font-medium text-white mt-4">{state?.incidents?.length > 0 ? "Act on the top incident first" : "System Secure"}</p>
+                <div className="flex gap-4 mt-3 text-xs">
+                  <div><span className="text-white font-bold">{state?.incidents?.length || 0}</span> open</div>
+                  <div><span className="text-white font-bold">{state?.incidents?.filter(i => i.score > 50).length || 0}</span> actionable</div>
+                </div>
+              </div>
+              
+              <div className="p-3 border-b border-white/5 bg-white/5 text-xs font-semibold text-gray-400 flex justify-between">
+                <span>Incidents</span>
+                <span>{state?.incidents?.length || 0} open</span>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                {state?.incidents?.length === 0 && <div className="text-center text-xs text-gray-500 mt-10">No active incidents</div>}
+                {state?.incidents?.map(i => (
+                  <div key={i.id} onClick={() => {
+                      document.dispatchEvent(new CustomEvent("analyze_incident", { detail: i.id }));
+                  }} className="glass-panel p-3 rounded-lg border border-white/10 hover:border-indigo-500/50 cursor-pointer transition-all">
+                    <div className="flex gap-3">
+                      <div className={`p-1 px-2 rounded h-fit text-[10px] font-bold ${i.score > 80 ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-orange-500/20 text-orange-400 border border-orange-500/30'}`}>
+                        {i.score > 80 ? 'CRITICAL' : 'HIGH'}<br/>
+                        <span className="text-sm">{Math.round(i.score)}</span>
+                      </div>
+                      <div className="flex-1">
+                        <div className="text-sm font-medium text-gray-200 line-clamp-2 leading-tight">{i.detections[0]?.rule_id || "Suspicious Activity"}</div>
+                        <div className="text-[10px] text-gray-500 mt-2 flex gap-2">
+                          <span>{i.id.substring(0,5)}</span>
+                          <span>{i.detections.length} signals</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            {/* Right Column */}
+            <div className="flex-1 flex flex-col bg-black/40">
+              
+              {/* Top Tabs */}
+              <div className="flex border-b border-white/5 px-4 pt-4 gap-6 text-sm text-gray-400">
+                <div onClick={() => setTopTab("Signals")} className={`pb-3 cursor-pointer ${topTab === "Signals" ? "border-b-2 border-indigo-400 text-indigo-400 font-medium" : "hover:text-gray-200"}`}>Signals</div>
+                <div onClick={() => setTopTab("Signatures")} className={`pb-3 cursor-pointer ${topTab === "Signatures" ? "border-b-2 border-indigo-400 text-indigo-400 font-medium" : "hover:text-gray-200"}`}>Signatures</div>
+                <div onClick={() => setTopTab("Raw events")} className={`pb-3 cursor-pointer ${topTab === "Raw events" ? "border-b-2 border-indigo-400 text-indigo-400 font-medium" : "hover:text-gray-200"}`}>Raw events</div>
+              </div>
+              
+              {/* Top Table Area */}
+              <div className="flex-1 overflow-auto p-4 border-b border-white/5">
+                {topTab === "Signals" && (
+                  <table className="w-full text-xs text-left">
+                    <thead className="text-gray-500 font-medium sticky top-0 bg-[#0c0e14] z-10">
+                      <tr>
+                        <th className="pb-3 font-normal border-b border-white/10">Time</th>
+                        <th className="pb-3 font-normal border-b border-white/10">Category</th>
+                        <th className="pb-3 font-normal border-b border-white/10">Rule ID</th>
+                        <th className="pb-3 font-normal border-b border-white/10">Entity</th>
+                        <th className="pb-3 font-normal border-b border-white/10">Title / Detail</th>
+                      </tr>
+                    </thead>
+                    <tbody className="font-mono text-[11px]">
+                      {state?.detections?.slice(0, 100).map((d, i) => (
+                        <tr key={i} className="border-b border-white/5 hover:bg-white/5">
+                          <td className="py-2 text-gray-400">{new Date((d.ts || 0) * 1000).toLocaleTimeString()}</td>
+                          <td className="py-2 text-gray-300">{d.category || 'system'}</td>
+                          <td className="py-2 text-gray-300">{d.rule_id}</td>
+                          <td className="py-2 text-emerald-400">{d.entity || '-'}</td>
+                          <td className="py-2 text-gray-400">{d.title || d.detail || '-'}</td>
+                        </tr>
+                      ))}
+                      {(!state?.detections || state.detections.length === 0) && (
+                        <tr><td colSpan="5" className="py-4 text-center text-gray-500">Waiting for signals...</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                )}
+                
+                {topTab === "Raw events" && (
+                  <table className="w-full text-xs text-left">
+                    <thead className="text-gray-500 font-medium sticky top-0 bg-[#0c0e14] z-10">
+                      <tr>
+                        <th className="pb-3 font-normal border-b border-white/10">Time</th>
+                        <th className="pb-3 font-normal border-b border-white/10">Category</th>
+                        <th className="pb-3 font-normal border-b border-white/10">Action</th>
+                        <th className="pb-3 font-normal border-b border-white/10">Process</th>
+                        <th className="pb-3 font-normal border-b border-white/10">Path/Entity</th>
+                      </tr>
+                    </thead>
+                    <tbody className="font-mono text-[11px]">
+                      {state?.events?.slice(0, 100).map((e, i) => (
+                        <tr key={i} className="border-b border-white/5 hover:bg-white/5">
+                          <td className="py-2 text-gray-400">{new Date((e.ts || 0) * 1000).toLocaleTimeString()}</td>
+                          <td className="py-2 text-gray-300">{e.category}</td>
+                          <td className="py-2 text-gray-300">{e.action}</td>
+                          <td className="py-2 text-indigo-300">{(e.attrs?.pid || e.pid) ? `${e.attrs?.pid || e.pid} (${e.attrs?.name || e.pname || 'unknown'})` : '-'}</td>
+                          <td className="py-2 text-gray-400 truncate max-w-xs" title={e.entity}>{e.entity || '-'}</td>
+                        </tr>
+                      ))}
+                      {(!state?.events || state.events.length === 0) && (
+                        <tr><td colSpan="5" className="py-4 text-center text-gray-500">Waiting for raw events...</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                )}
+                
+                {topTab === "Signatures" && (
+                  <div className="p-6 text-sm text-gray-400">
+                    <h3 className="text-white mb-2 font-semibold">Loaded Rules Engine</h3>
+                    <p>Total Rules Loaded: {state?.status?.detectors?.rules_loaded || 0}</p>
+                    <p>YARA Files Loaded: {state?.status?.detectors?.yara_files_loaded || 0}</p>
+                  </div>
+                )}
+              </div>
+              
+              {/* Middle Metrics Row */}
+              <div className="flex gap-px bg-white/10 border-b border-white/5">
+                <div className="flex-1 bg-[#12141c] p-4 border border-orange-500/30 rounded bg-orange-500/5 relative overflow-hidden">
+                  <div className="text-xs text-orange-200 mb-1">Memory</div>
+                  <div className="text-xl font-bold text-white">{state?.metrics?.mem_percent?.toFixed(1) || '0.0'}<span className="text-sm font-normal text-gray-400">%</span></div>
+                  <svg className="w-full h-8 mt-2" viewBox="0 0 100 30" preserveAspectRatio="none">
+                    <polyline fill="none" stroke="#f97316" strokeWidth="2" points={(state?.history || []).map((h, i, arr) => `${(i / (arr.length || 1)) * 100},${30 - (h.mem_percent / 100) * 30}`).join(' ')} />
+                  </svg>
+                </div>
+                <div className="flex-1 bg-[#12141c] p-4 border-b border-white/5">
+                  <div className="text-xs text-gray-400 mb-1">Processor</div>
+                  <div className="text-xl font-bold text-white">{state?.metrics?.cpu_percent?.toFixed(1) || '0.0'}<span className="text-sm font-normal text-gray-400">%</span></div>
+                   <svg className="w-full h-8 mt-2" viewBox="0 0 100 30" preserveAspectRatio="none">
+                     <polyline fill="none" stroke="#f97316" strokeWidth="2" points={(state?.history || []).map((h, i, arr) => `${(i / (arr.length || 1)) * 100},${30 - (h.cpu_percent / 100) * 30}`).join(' ')} />
+                   </svg>
+                </div>
+                <div className="flex-1 bg-[#12141c] p-4 border-b border-white/5">
+                  <div className="text-xs text-gray-400 mb-1">Context switches</div>
+                  <div className="text-xl font-bold text-white">{state?.metrics?.ctx_switches_per_s?.toFixed(0) || 0}<span className="text-sm font-normal text-gray-400">/s</span></div>
+                   <svg className="w-full h-8 mt-2" viewBox="0 0 100 30" preserveAspectRatio="none">
+                     <polyline fill="none" stroke="#10b981" strokeWidth="2" points={(state?.history || []).map((h, i, arr) => `${(i / (arr.length || 1)) * 100},${30 - (Math.min(h.ctx_switches_per_s || 0, 50000) / 50000) * 30}`).join(' ')} />
+                   </svg>
+                </div>
+                <div className="flex-1 bg-[#12141c] p-4 border-b border-white/5">
+                  <div className="text-xs text-gray-400 mb-1">Processes</div>
+                  <div className="text-xl font-bold text-white">{state?.metrics?.process_count || 0}</div>
+                   <svg className="w-full h-8 mt-2" viewBox="0 0 100 30" preserveAspectRatio="none">
+                     <polyline fill="none" stroke="#3b82f6" strokeWidth="2" points={(state?.history || []).map((h, i, arr) => `${(i / (arr.length || 1)) * 100},${30 - (Math.min(h.process_count || 0, 1000) / 1000) * 30}`).join(' ')} />
+                   </svg>
+                </div>
+              </div>
+              
+              {/* Bottom Tabs (Host / Processes / Response Log) */}
+              <div className="flex-1 flex flex-col">
+                <div className="flex border-b border-white/5 px-4 pt-3 gap-6 text-sm text-gray-400 items-end">
+                  <div onClick={() => setBottomTab("Host")} className={`pb-2 cursor-pointer ${bottomTab === "Host" ? "px-3 border border-white/10 rounded-t bg-white/5 text-gray-200" : "hover:text-gray-200"}`}>Host</div>
+                  <div onClick={() => setBottomTab("Processes")} className={`pb-2 cursor-pointer ${bottomTab === "Processes" ? "px-3 border border-white/10 rounded-t bg-white/5 text-gray-200" : "hover:text-gray-200"}`}>Processes</div>
+                  <div onClick={() => setBottomTab("Response log")} className={`pb-2 cursor-pointer ${bottomTab === "Response log" ? "px-3 border border-white/10 rounded-t bg-white/5 text-gray-200" : "hover:text-gray-200"}`}>Response log</div>
+                  <div onClick={() => setBottomTab("Pipeline")} className={`pb-2 cursor-pointer ${bottomTab === "Pipeline" ? "px-3 border border-white/10 rounded-t bg-white/5 text-gray-200" : "hover:text-gray-200"}`}>Pipeline</div>
+                </div>
+                
+                <div className="flex-1 overflow-auto p-4">
+                  {bottomTab === "Response log" && (
+                    <table className="w-full text-xs text-left">
+                      <thead className="text-gray-500 font-medium">
+                        <tr>
+                          <th className="pb-2 font-normal border-b border-white/10">Time</th>
+                          <th className="pb-2 font-normal border-b border-white/10">Action</th>
+                          <th className="pb-2 font-normal border-b border-white/10">Target</th>
+                          <th className="pb-2 font-normal border-b border-white/10">Outcome</th>
+                          <th className="pb-2 font-normal border-b border-white/10">Reason</th>
+                        </tr>
+                      </thead>
+                      <tbody className="font-mono text-[11px]">
+                        {state?.actions?.map((a, i) => (
+                          <tr key={i} className="border-b border-white/5 hover:bg-white/5">
+                            <td className="py-2 text-gray-400">{new Date((a.ts || 0) * 1000).toLocaleTimeString()}</td>
+                            <td className="py-2"><span className="bg-purple-500/20 text-purple-300 border border-purple-500/30 px-2 py-0.5 rounded">{a.action}</span></td>
+                            <td className="py-2 text-gray-300">{a.target}</td>
+                            <td className="py-2"><span className="text-gray-400 border border-gray-600 px-2 py-0.5 rounded">{a.dry_run ? 'withheld' : a.executed ? 'executed' : 'failed'}</span></td>
+                            <td className="py-2 text-gray-500">{a.detail}</td>
+                          </tr>
+                        ))}
+                        {(!state?.actions || state.actions.length === 0) && (
+                          <tr><td colSpan="5" className="py-4 text-center text-gray-500">No automated responses yet</td></tr>
+                        )}
+                      </tbody>
+                    </table>
+                  )}
+                  
+                  {bottomTab === "Processes" && (
+                    <table className="w-full text-xs text-left">
+                      <thead className="text-gray-500 font-medium">
+                        <tr>
+                          <th className="pb-2 font-normal border-b border-white/10">PID</th>
+                          <th className="pb-2 font-normal border-b border-white/10">Name</th>
+                          <th className="pb-2 font-normal border-b border-white/10">User</th>
+                          <th className="pb-2 font-normal border-b border-white/10">CPU %</th>
+                          <th className="pb-2 font-normal border-b border-white/10">Threads</th>
+                          <th className="pb-2 font-normal border-b border-white/10">Command Line</th>
+                        </tr>
+                      </thead>
+                      <tbody className="font-mono text-[11px]">
+                        {state?.processes?.slice(0, 30).map((p, i) => (
+                          <tr key={i} className="border-b border-white/5 hover:bg-white/5">
+                            <td className="py-2 text-indigo-300">{p.pid}</td>
+                            <td className="py-2 text-gray-200">{p.name}</td>
+                            <td className="py-2 text-gray-400">{p.user}</td>
+                            <td className="py-2 text-orange-300">{p.cpu}</td>
+                            <td className="py-2 text-gray-400">{p.threads}</td>
+                            <td className="py-2 text-gray-500 truncate max-w-sm" title={p.cmdline}>{p.cmdline || '-'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                  
+                  {bottomTab === "Host" && (
+                    <div className="grid grid-cols-2 gap-4 text-sm text-gray-400 p-2">
+                      <div><span className="font-semibold text-white">Hostname:</span> {state?.status?.host?.hostname}</div>
+                      <div><span className="font-semibold text-white">Platform:</span> {state?.status?.host?.platform}</div>
+                      <div><span className="font-semibold text-white">Architecture:</span> {state?.status?.host?.arch}</div>
+                      <div><span className="font-semibold text-white">Kernel:</span> {state?.status?.host?.kernel}</div>
+                      <div><span className="font-semibold text-white">Boot Time:</span> {new Date((state?.status?.host?.boot_time || 0) * 1000).toLocaleString()}</div>
+                      <div><span className="font-semibold text-white">Uptime:</span> {Math.round((state?.status?.host?.uptime_s || 0) / 3600)} hours</div>
+                    </div>
+                  )}
+                  
+                  {bottomTab === "Pipeline" && (
+                    <div className="grid grid-cols-2 gap-4 text-sm text-gray-400 p-2">
+                      <div><span className="font-semibold text-white">Queue Depth:</span> {state?.status?.pipeline?.queue_depth} / {state?.status?.pipeline?.queue_capacity}</div>
+                      <div><span className="font-semibold text-white">Events Processed:</span> {state?.status?.pipeline?.events_processed}</div>
+                      <div><span className="font-semibold text-white">Events Dropped:</span> {state?.status?.pipeline?.events_dropped}</div>
+                      <div><span className="font-semibold text-white">Throughput:</span> {state?.status?.pipeline?.throughput_eps} EPS</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+            </div>
+          </div>
+          
+          <Chatbot session="react_client" hostState={state} />
+        </div>
+      );
+    };
+
+    // --- MAIN APP ---
+    const App = () => {
+      const [token, setTokenState] = useState(getToken());
+      const [state, setState] = useState(null);
+      const wsRef = useRef(null);
+
+      const handleLogin = (t) => {
+        setToken(t);
+        setTokenState(t);
+      };
+      
+      const handleLogout = () => {
+        setToken(null);
+        setTokenState(null);
+      };
+
+      // Connect WS when authenticated
+      useEffect(() => {
+        if (!token) return;
+        
+        let wsProto = window.location.protocol === "https:" ? "wss:" : "ws:";
+        const ws = new WebSocket(`${wsProto}//${window.location.host}/ws`);
+        
+        ws.onopen = () => ws.send(JSON.stringify({ type: "auth", token }));
+        ws.onmessage = (e) => {
+          try {
+            const msg = JSON.parse(e.data);
+            if (msg.type === "snapshot") {
+              setState(prev => ({ ...prev, ...msg.data }));
+            } else if (msg.type === "metrics") {
+              setState(prev => ({
+                ...prev,
+                metrics: msg.data,
+                history: [...(prev?.history || []), msg.data].slice(-120)
+              }));
+            } else if (msg.type === "events") {
+              setState(prev => ({ ...prev, events: [...msg.data, ...(prev?.events || [])].slice(0, 120) }));
+            } else if (msg.type === "detections") {
+              setState(prev => ({ ...prev, detections: [...msg.data, ...(prev?.detections || [])].slice(0, 80) }));
+            } else if (msg.type === "incident") {
+              setState(prev => {
+                const incs = [...(prev?.incidents || [])];
+                const idx = incs.findIndex(i => i.id === msg.data.id);
+                if(idx >= 0) incs[idx] = msg.data;
+                else incs.unshift(msg.data);
+                return { ...prev, incidents: incs };
+              });
+            } else if (msg.type === "action") {
+              setState(prev => ({ ...prev, actions: [msg.data, ...(prev?.actions || [])].slice(0, 30) }));
+            }
+          } catch(err) {}
+        };
+        ws.onclose = () => console.log("WS closed");
+        wsRef.current = ws;
+
+        // Fallback polling for UI population
+        const poll = setInterval(async () => {
+           try {
+             const r = await apiFetch("/api/health");
+             if(r.ok) {
+                 // Trigger full state fetch or just keep alive
+             }
+           } catch(e) {}
+        }, 5000);
+
+        return () => {
+          ws.close();
+          clearInterval(poll);
+        };
+      }, [token]);
+
+      useEffect(() => {
+        if (window.lucide) {
+          window.lucide.createIcons();
+        }
+      });
+
+      if (!token) return <LoginScreen onLogin={handleLogin} />;
+      return <Dashboard state={state} logout={handleLogout} />;
+    };
+
+    // Initialize Lucide icons after render
+    setTimeout(() => {
+        if(window.lucide) window.lucide.createIcons();
+    }, 100);
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>

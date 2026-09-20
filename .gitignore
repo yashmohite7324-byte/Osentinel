@@ -1,0 +1,21 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# OSentinel data
+data/osentinel.db
+data/sandbox/
+data/dataset/raw_malwares/
+data/models/*.json
+data/models/*.jsonl
+data/quarantine/
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/

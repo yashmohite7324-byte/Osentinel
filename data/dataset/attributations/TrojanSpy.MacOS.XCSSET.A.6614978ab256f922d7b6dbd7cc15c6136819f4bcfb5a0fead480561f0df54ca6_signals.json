@@ -1,0 +1,143 @@
+{
+  "sample_id": "TrojanSpy.MacOS.XCSSET.A.6614978ab256f922d7b6dbd7cc15c6136819f4bcfb5a0fead480561f0df54ca6",
+  "extraction_timestamp": "2025-10-31T21:41:18.999244",
+  "signal_categories": [
+    "static_metadata",
+    "strings_language",
+    "code_stylometry",
+    "build_environment",
+    "runtime_behavior",
+    "network_infrastructure",
+    "operational_artifacts",
+    "external_correlation",
+    "crypto_monetization",
+    "automation_signals"
+  ],
+  "static_metadata": {
+    "file_size": 22032,
+    "mime_type": "application/x-mach-binary",
+    "yara_matches": [],
+    "packers": [],
+    "has_signature": false
+  },
+  "strings_language": {
+    "strings": [
+      "=%lu %d",
+      "%lu %d%c",
+      "E: neither argv[0] nor $_ works.",
+      "%s%s%s: %s",
+      "<null>",
+      "_H<)X",
+      "0b\\(=P7e\\",
+      "2isesW",
+      "zCCHiq",
+      "SgTRPB",
+      "m7d6U+e",
+      "/QrfT`",
+      "\\:mt%",
+      "_|Z$Z",
+      "8eX6 R^S",
+      "k3uO@h",
+      "@H\\cJ",
+      "9U&tH",
+      "3J;4_",
+      "fXZ@cj",
+      "hR.uFx",
+      "~_5sa",
+      "#I?yz)",
+      "')&`F",
+      "wn^|g",
+      "SuyT9",
+      "*VMIj",
+      "7Qdh8JS!",
+      "{[ y}",
+      "0(~YJ",
+      "kSDZs"
+    ],
+    "languages_detected": [],
+    "comments_language": null,
+    "hardcoded_paths": [],
+    "emails": [],
+    "phone_numbers": [],
+    "ip_addresses": [],
+    "urls": [],
+    "locale_markers": {
+      "date_format_hints": [],
+      "currency_symbols": [
+        "$",
+        "$"
+      ],
+      "decimal_separators": []
+    }
+  },
+  "code_stylometry": {
+    "naming_conventions": {
+      "camel_case_pct": 0,
+      "snake_case_pct": 0,
+      "hungarian_pct": 0,
+      "all_caps_pct": 0
+    },
+    "code_complexity": {
+      "average_cyclomatic": 2.9580645161290327,
+      "max_complexity": 0,
+      "function_count": 0
+    },
+    "api_usage": {
+      "unique_api_count": 0,
+      "api_names": []
+    },
+    "unique_idioms": [],
+    "has_ast_features": false
+  },
+  "build_environment": {
+    "pdb_paths": [],
+    "build_host": null,
+    "vcs_hash": null,
+    "compile_timezone_hint": null,
+    "dependencies": [],
+    "compiler": "unknown"
+  },
+  "runtime_behavior": {
+    "persistence_methods": [
+      "registry_run_key"
+    ],
+    "syscalls": [],
+    "sandbox_checks": [],
+    "privilege_escalation_attempts": []
+  },
+  "network_infrastructure": {
+    "domains": [],
+    "ip_addresses": [],
+    "tls_ja3": null,
+    "asn": null,
+    "beacon_interval_sec": null
+  },
+  "operational_artifacts": {
+    "time_profile": {},
+    "weekday_activity": [],
+    "debug_artifacts": [],
+    "test_indicators": []
+  },
+  "external_correlation": {
+    "fuzzy_hash": null,
+    "vt_urls": [
+      "https://www.virustotal.com/gui/file/6614978ab256f922d7b6dbd7cc15c6136819f4bcfb5a0fead480561f0df54ca6"
+    ],
+    "whois": {},
+    "passive_dns": [],
+    "md5": "2f7d8e7c6be2ffecd4b6a48c3d4f73df",
+    "sha256": "6614978ab256f922d7b6dbd7cc15c6136819f4bcfb5a0fead480561f0df54ca6"
+  },
+  "crypto_monetization": {
+    "cryptocurrency_addresses": [],
+    "algorithms": [],
+    "static_keys": false,
+    "iv_reuse": false
+  },
+  "automation_signals": {
+    "repetitive_code": false,
+    "template_based": false,
+    "unniform_naming": true,
+    "likely_automated": true
+  }
+}

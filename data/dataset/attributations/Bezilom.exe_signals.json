@@ -1,0 +1,176 @@
+{
+  "sample_id": "Bezilom.exe",
+  "extraction_timestamp": "2025-10-31T23:53:05.147711",
+  "signal_categories": [
+    "static_metadata",
+    "strings_language",
+    "code_stylometry",
+    "build_environment",
+    "runtime_behavior",
+    "network_infrastructure",
+    "operational_artifacts",
+    "external_correlation",
+    "crypto_monetization",
+    "automation_signals"
+  ],
+  "static_metadata": {
+    "file_size": 28672,
+    "mime_type": "application/vnd.microsoft.portable-executable",
+    "yara_matches": [],
+    "packers": [],
+    "has_signature": false
+  },
+  "strings_language": {
+    "strings": [
+      "!This program cannot be run in DOS mode.",
+      ".text",
+      "`.data",
+      ".rsrc",
+      "MSVBVM60.DLL",
+      "zimmer",
+      "Tx*:&",
+      "Zimmer",
+      "zimmer",
+      "modAPI",
+      "modInfectWord",
+      "frmZimmer",
+      "modMain",
+      "zimmer",
+      "user32",
+      "FindWindowA",
+      "kernel32",
+      "GlobalMemoryStatus",
+      "GetDiskFreeSpaceA",
+      "advapi32.dll",
+      "RegCreateKeyA",
+      "RegSetValueExA",
+      "RegQueryValueExA",
+      "RegCloseKey",
+      "RegFlushKey",
+      "GetVolumeInformationA",
+      "GetWindowsDirectoryA",
+      "GetWindowTextA",
+      "GetWindow",
+      "GetDesktopWindow",
+      "IsWindowVisible",
+      "ShowWindow",
+      "VBA6.DLL",
+      "Tx*:&",
+      "Timer",
+      "C:\\Program Files\\Microsoft Visual Studio\\VB98\\VB6.OLB",
+      "DisableAll",
+      "pMemory",
+      "HardDisk",
+      "Tx*:&",
+      "frmZimmer",
+      "Zimmer  ",
+      "wwwwwp",
+      "wwwwwwwwwwwp",
+      "wwwwwww",
+      "wwwwwww",
+      "wwwww",
+      "wwwww",
+      "wwwww",
+      "Form1",
+      "Timer",
+      "SpecFolder",
+      "MSVBVM60.DLL",
+      "MethCallEngine",
+      "EVENT_SINK_AddRef",
+      "DllFunctionCall",
+      "EVENT_SINK_Release",
+      "EVENT_SINK_QueryInterface",
+      "__vbaExceptHandler",
+      "ProcCallEngine",
+      "wwwwwwwwwwwp",
+      "wwwwwww",
+      "wwwwwww",
+      "wwwww",
+      "wwwww",
+      "wwwww",
+      "wwwwwp"
+    ],
+    "languages_detected": [],
+    "comments_language": null,
+    "hardcoded_paths": [
+      "C:\\Program Files\\Microsoft Visual Studio\\VB98\\VB6.OLB"
+    ],
+    "emails": [],
+    "phone_numbers": [],
+    "ip_addresses": [],
+    "urls": [],
+    "locale_markers": {
+      "date_format_hints": [],
+      "currency_symbols": [],
+      "decimal_separators": []
+    }
+  },
+  "code_stylometry": {
+    "naming_conventions": {
+      "camel_case_pct": 0,
+      "snake_case_pct": 0,
+      "hungarian_pct": 0,
+      "all_caps_pct": 0
+    },
+    "code_complexity": {
+      "average_cyclomatic": 3.1,
+      "max_complexity": 0,
+      "function_count": 0
+    },
+    "api_usage": {
+      "unique_api_count": 0,
+      "api_names": []
+    },
+    "unique_idioms": [],
+    "has_ast_features": false
+  },
+  "build_environment": {
+    "pdb_paths": [],
+    "build_host": null,
+    "vcs_hash": null,
+    "compile_timezone_hint": null,
+    "dependencies": [],
+    "compiler": "visualstudio:unknown"
+  },
+  "runtime_behavior": {
+    "persistence_methods": [],
+    "syscalls": [],
+    "sandbox_checks": [],
+    "privilege_escalation_attempts": []
+  },
+  "network_infrastructure": {
+    "domains": [],
+    "ip_addresses": [],
+    "tls_ja3": null,
+    "asn": null,
+    "beacon_interval_sec": null
+  },
+  "operational_artifacts": {
+    "time_profile": {},
+    "weekday_activity": [],
+    "debug_artifacts": [],
+    "test_indicators": []
+  },
+  "external_correlation": {
+    "fuzzy_hash": null,
+    "vt_urls": [
+      "https://www.virustotal.com/gui/file/94d2b1da2c4ce7db94ee9603bc2f81386032687e7c664aff6460ba0f5dac0022"
+    ],
+    "whois": {},
+    "passive_dns": [],
+    "md5": "8e9d7feb3b955e6def8365fd83007080",
+    "sha256": "94d2b1da2c4ce7db94ee9603bc2f81386032687e7c664aff6460ba0f5dac0022"
+  },
+  "crypto_monetization": {
+    "cryptocurrency_addresses": [],
+    "algorithms": [],
+    "static_keys": false,
+    "iv_reuse": false
+  },
+  "automation_signals": {
+    "repetitive_code": false,
+    "template_based": false,
+    "unniform_naming": true,
+    "likely_automated": true
+  }
+}
