@@ -337,7 +337,9 @@ class Engine:
             self.judge.submit(d)
 
         for inc in self.correlator.ingest(dets):
-            self.responder.evaluate(inc)
+            actions = self.responder.evaluate(inc)
+            for act in actions:
+                self._broadcast({"type": "action", "data": act.to_dict()})
             self.store.upsert_incident(inc)
             self._broadcast({"type": "incident", "data": inc.to_dict()})
             if inc.score >= self.cfg.triage_min_score and not inc.narrative:

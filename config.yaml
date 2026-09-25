@@ -72,7 +72,7 @@ sequence_markov_warmup: 40
 # hosted API - required if telemetry must not leave the network.
 llm_judge: true
 llm_backend: local        # anthropic | local
-llm_model: llama3.1
+llm_model: llama3.2:1b
 llm_local_url: http://127.0.0.1:11434/v1
 llm_band_low: 45.0            # below this, not worth a call
 llm_band_high: 88.0           # above this, already conclusive
@@ -97,7 +97,7 @@ triage_min_score: 65.0
 # no ANTHROPIC_API_KEY it answers from the detectors and the prevention
 # playbooks instead of going quiet.
 assistant: true
-assistant_model: llama3.1
+assistant_model: llama3.2:1b
 assistant_max_tool_hops: 5    # investigation steps per question
 assistant_history_turns: 12   # turns kept verbatim before older ones are summarised
 

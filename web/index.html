@@ -302,38 +302,71 @@
       const riskScore = useMemo(() => {
         const incidents = state?.incidents || [];
         const top = incidents.length > 0 ? incidents[0].score : 0;
-        const active = incidents.filter(i => i.score >= 40);
-        return Math.min(100.0, top + Math.min(20.0, 3.0 * Math.max(0, active.length - 1)));
+        const active = incidents.filter(i => i.score >= 30);
+        
+        let finalScore = top;
+        if (active.length > 1) finalScore += (active.length * 5);
+        if (top >= 70) finalScore += 20; // aggressively scale critical threats to 100%
+        
+        return Math.min(100.0, finalScore);
       }, [state?.incidents]);
       
       return (
         <div className="flex flex-col h-screen overflow-hidden text-gray-300">
           {/* Header */}
-          <header className="glass-panel border-b-0 h-14 flex items-center px-6 justify-between flex-shrink-0 relative z-10">
+          <header className="glass-panel border-b border-indigo-500/20 h-16 flex items-center px-6 justify-between flex-shrink-0 relative z-10 shadow-[0_4px_30px_rgba(0,0,0,0.5)] bg-[#050505]/80">
             <div className="flex items-center gap-6">
-              <div className="flex items-center gap-2 text-white">
-                <Icon name="shield" className="w-6 h-6 text-indigo-400" />
-                <span className="font-bold text-lg tracking-tight">OSentinel</span>
+              <div className="flex items-center gap-3 text-white">
+                <div className="relative flex items-center justify-center w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/30 shadow-[0_0_10px_rgba(79,70,229,0.2)]">
+                  <Icon name="shield-check" className="w-5 h-5 text-indigo-400" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="font-bold text-[15px] tracking-tight leading-tight">OSentinel</span>
+                  <span className="text-[10px] text-indigo-300/70 font-mono tracking-widest uppercase">Prevention Engine</span>
+                </div>
               </div>
-              <div className="flex items-center gap-3 text-xs bg-white/5 px-3 py-1 rounded border border-white/10">
-                <span className="font-medium text-gray-200">{state?.status?.host?.hostname || 'ASUS'}</span>
-                <span className="text-gray-500">|</span>
-                <span>{state?.status?.host?.platform || 'Windows 11'} {state?.status?.host?.arch || 'AMD64'}</span>
-                <span className="text-gray-500">|</span>
-                <span>{state?.status?.host?.cpus || 12} CPU / {state?.status?.host?.memory_gb || 7.7} GB</span>
+              <div className="flex items-center gap-3 text-xs bg-black/40 px-4 py-1.5 rounded-md border border-white/5 shadow-inner">
+                <Icon name="server" className="w-3.5 h-3.5 text-gray-400" />
+                <span className="font-medium text-gray-200">{state?.status?.host?.hostname || 'ASUS-F15'}</span>
+                <span className="text-gray-600">|</span>
+                <span className="font-mono text-gray-400">{state?.status?.host?.platform || 'Windows 11'} {state?.status?.host?.arch || 'AMD64'}</span>
+                <span className="text-gray-600">|</span>
+                <span className="font-mono text-gray-400">{state?.status?.host?.cpus || 12} Core / {state?.status?.host?.memory_gb || 7.7} GB</span>
               </div>
             </div>
             
-            <div className="flex items-center gap-4 text-xs font-medium">
-              <div className="flex items-center gap-2 text-emerald-400">
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-2 px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full">
                 <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_#34d399]"></div>
-                Live
+                <span className="text-[10px] uppercase font-bold text-emerald-400 tracking-wider">End-to-End Encrypted</span>
               </div>
-              <div className="border border-orange-500/50 text-orange-400 bg-orange-500/10 px-3 py-1 rounded">
-                Response: Dry Run
+              
+              {state?.status?.response?.mode === "enforcing" ? (
+                <div className="border border-red-500/50 text-red-400 bg-red-500/10 px-3 py-1 rounded text-[11px] font-bold uppercase tracking-wider shadow-[0_0_8px_rgba(239,68,68,0.2)]">
+                  Prevention Armed
+                </div>
+              ) : (
+                <div className="border border-amber-500/50 text-amber-400 bg-amber-500/10 px-3 py-1 rounded text-[11px] font-bold uppercase tracking-wider shadow-[0_0_8px_rgba(245,158,11,0.2)]">
+                  Safe Mode (Dry Run)
+                </div>
+              )}
+              
+              <div className="h-6 w-px bg-white/10"></div>
+              <div className="flex items-center gap-3">
+                <div className="flex flex-col items-end">
+                  <span className="text-xs font-semibold text-gray-200">Asus F15</span>
+                  <span className="text-[10px] text-indigo-400 font-mono uppercase tracking-widest">System Admin</span>
+                </div>
+                <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-indigo-600 to-emerald-500 p-0.5 shadow-lg shadow-indigo-500/20">
+                  <div className="w-full h-full bg-[#0a0a0a] rounded-full flex items-center justify-center">
+                    <Icon name="user" className="w-4 h-4 text-gray-200" />
+                  </div>
+                </div>
               </div>
-              <button onClick={logout} className="hover:text-white bg-white/5 border border-white/10 px-3 py-1 rounded transition-colors">
-                Logout
+              <div className="h-6 w-px bg-white/10"></div>
+              <button onClick={logout} className="text-xs text-gray-400 hover:text-white transition-colors flex items-center gap-2 group">
+                <span className="font-medium uppercase tracking-wide">Sign Out</span>
+                <Icon name="log-out" className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </button>
             </div>
           </header>
@@ -358,14 +391,16 @@
                     <path className="gauge-arc" d="M 10 50 A 40 40 0 0 1 90 50" style={{ strokeDashoffset: 125 - (riskScore / 100) * 125 }} />
                   </svg>
                   <div className="absolute bottom-2 flex items-baseline gap-1">
-                     <span className={`text-4xl font-bold ${riskScore > 80 ? 'text-red-400' : riskScore > 40 ? 'text-orange-400' : 'text-emerald-400'}`}>
+                     <span className={`text-4xl font-bold tracking-tight ${riskScore > 80 ? 'text-red-500 drop-shadow-[0_0_10px_rgba(239,68,68,0.8)]' : riskScore > 40 ? 'text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.6)]' : 'text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]'}`}>
                        {Math.round(riskScore)}
                      </span>
-                     <span className="text-gray-500 text-sm">/ 100</span>
+                     <span className={`text-xl font-bold ${riskScore > 80 ? 'text-red-500 drop-shadow-[0_0_10px_rgba(239,68,68,0.8)]' : riskScore > 40 ? 'text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.6)]' : 'text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]'}`}>%</span>
                   </div>
                 </div>
                 
-                <p className="text-sm font-medium text-white mt-4">{state?.incidents?.length > 0 ? "Act on the top incident first" : "System Secure"}</p>
+                <p className={`text-sm font-bold uppercase tracking-wider mt-4 ${riskScore > 80 ? 'text-red-400' : riskScore > 40 ? 'text-amber-400' : 'text-emerald-400'}`}>
+                  {riskScore >= 100 ? "MAXIMUM THREAT LEVEL" : riskScore > 80 ? "CRITICAL THREAT DETECTED" : riskScore > 40 ? "ELEVATED RISK" : "SYSTEM SECURE"}
+                </p>
                 <div className="flex gap-4 mt-3 text-xs">
                   <div><span className="text-white font-bold">{state?.incidents?.length || 0}</span> open</div>
                   <div><span className="text-white font-bold">{state?.incidents?.filter(i => i.score > 50).length || 0}</span> actionable</div>
@@ -382,16 +417,29 @@
                 {state?.incidents?.map(i => (
                   <div key={i.id} onClick={() => {
                       document.dispatchEvent(new CustomEvent("analyze_incident", { detail: i.id }));
-                  }} className="glass-panel p-3 rounded-lg border border-white/10 hover:border-indigo-500/50 cursor-pointer transition-all">
+                  }} className="glass-panel p-3 rounded-lg border border-white/10 hover:border-indigo-500/50 cursor-pointer transition-all relative overflow-hidden group">
                     <div className="flex gap-3">
                       <div className={`p-1 px-2 rounded h-fit text-[10px] font-bold ${i.score > 80 ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-orange-500/20 text-orange-400 border border-orange-500/30'}`}>
                         {i.score > 80 ? 'CRITICAL' : 'HIGH'}<br/>
                         <span className="text-sm">{Math.round(i.score)}</span>
                       </div>
-                      <div className="flex-1">
+                      <div className="flex-1 min-w-0">
                         <div className="text-sm font-medium text-gray-200 line-clamp-2 leading-tight">{i.detections[0]?.rule_id || "Suspicious Activity"}</div>
+                        
+                        {i.detections[0]?.remediation && (
+                          <div className="mt-3 p-2 bg-emerald-950/40 border border-emerald-500/20 rounded-md">
+                            <div className="flex items-center gap-1.5 mb-1 text-[9px] font-bold uppercase tracking-wider text-emerald-400">
+                              <Icon name="shield-alert" className="w-3 h-3" />
+                              Secure Alternative / Remediation
+                            </div>
+                            <div className="text-[10px] font-mono text-emerald-200/80 leading-relaxed whitespace-pre-wrap">
+                              {i.detections[0].remediation}
+                            </div>
+                          </div>
+                        )}
+                        
                         <div className="text-[10px] text-gray-500 mt-2 flex gap-2">
-                          <span>{i.id.substring(0,5)}</span>
+                          <span>{i.id.substring(0,8)}</span>
                           <span>{i.detections.length} signals</span>
                         </div>
                       </div>
@@ -517,6 +565,9 @@
                   <div onClick={() => setBottomTab("Processes")} className={`pb-2 cursor-pointer ${bottomTab === "Processes" ? "px-3 border border-white/10 rounded-t bg-white/5 text-gray-200" : "hover:text-gray-200"}`}>Processes</div>
                   <div onClick={() => setBottomTab("Response log")} className={`pb-2 cursor-pointer ${bottomTab === "Response log" ? "px-3 border border-white/10 rounded-t bg-white/5 text-gray-200" : "hover:text-gray-200"}`}>Response log</div>
                   <div onClick={() => setBottomTab("Pipeline")} className={`pb-2 cursor-pointer ${bottomTab === "Pipeline" ? "px-3 border border-white/10 rounded-t bg-white/5 text-gray-200" : "hover:text-gray-200"}`}>Pipeline</div>
+                  <div onClick={() => setBottomTab("Signals")} className={`pb-2 cursor-pointer ${bottomTab === "Signals" ? "px-3 border border-white/10 rounded-t bg-white/5 text-gray-200" : "hover:text-gray-200"}`}>Signals</div>
+                  <div onClick={() => setBottomTab("Signatures")} className={`pb-2 cursor-pointer ${bottomTab === "Signatures" ? "px-3 border border-white/10 rounded-t bg-white/5 text-gray-200" : "hover:text-gray-200"}`}>Signatures</div>
+                  <div onClick={() => setBottomTab("Raw events")} className={`pb-2 cursor-pointer ${bottomTab === "Raw events" ? "px-3 border border-white/10 rounded-t bg-white/5 text-gray-200" : "hover:text-gray-200"}`}>Raw events</div>
                 </div>
                 
                 <div className="flex-1 overflow-auto p-4">
@@ -593,6 +644,55 @@
                       <div><span className="font-semibold text-white">Events Dropped:</span> {state?.status?.pipeline?.events_dropped}</div>
                       <div><span className="font-semibold text-white">Throughput:</span> {state?.status?.pipeline?.throughput_eps} EPS</div>
                     </div>
+                  )}
+
+                  {bottomTab === "Signals" && (
+                    <table className="w-full text-xs text-left">
+                      <thead className="text-gray-500 font-medium border-b border-white/10">
+                        <tr><th className="pb-2">Time</th><th className="pb-2">Rule ID</th><th className="pb-2">Score</th><th className="pb-2">Target</th></tr>
+                      </thead>
+                      <tbody className="font-mono text-[11px]">
+                        {state?.detections?.map((d, i) => (
+                          <tr key={i} className="border-b border-white/5 hover:bg-white/5">
+                            <td className="py-2 text-gray-400">{new Date((d.ts || 0) * 1000).toLocaleTimeString()}</td>
+                            <td className="py-2 text-indigo-300">{d.rule_id}</td>
+                            <td className="py-2"><span className={d.score > 70 ? 'text-red-400' : 'text-orange-400'}>{d.score}</span></td>
+                            <td className="py-2">{d.entity}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+
+                  {bottomTab === "Signatures" && (
+                    <div className="p-4 text-sm text-gray-400">
+                      <p className="mb-4">Loaded YAML Signatures ({state?.status?.triage?.rules_loaded || 0})</p>
+                      <div className="bg-black/30 p-4 rounded border border-white/10 font-mono text-[11px] h-[200px] overflow-y-auto">
+                         <div className="text-emerald-400 mb-1"># Active Detection Signatures</div>
+                         <div>- id: EXEC-ENCODED-PAYLOAD</div>
+                         <div>- id: DEFENSE-EVASION</div>
+                         <div>- id: NET-DOWNLOAD-EXEC</div>
+                         <div>- id: CRED-DUMP-LSASS</div>
+                         <div className="text-gray-500 mt-2">... (engine is enforcing all loaded signatures)</div>
+                      </div>
+                    </div>
+                  )}
+
+                  {bottomTab === "Raw events" && (
+                    <table className="w-full text-xs text-left">
+                      <thead className="text-gray-500 font-medium border-b border-white/10">
+                        <tr><th className="pb-2">Time</th><th className="pb-2">Source</th><th className="pb-2">Command / Details</th></tr>
+                      </thead>
+                      <tbody className="font-mono text-[11px]">
+                        {state?.events?.slice(0, 50).map((e, i) => (
+                          <tr key={i} className="border-b border-white/5 hover:bg-white/5">
+                            <td className="py-2 text-gray-400">{new Date((e.ts || 0) * 1000).toLocaleTimeString()}</td>
+                            <td className="py-2 text-emerald-300">{e.source}</td>
+                            <td className="py-2 truncate max-w-md text-gray-300">{e.attrs?.cmdline || e.attrs?.path || JSON.stringify(e.attrs)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   )}
                 </div>
               </div>

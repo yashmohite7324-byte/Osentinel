@@ -3,161 +3,130 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Sign in — OSentinel</title>
+<<title>Sign in — OSentinel</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Chivo:wght@400;500;600;700&family=Chivo+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-/* ── tokens ───────────────────────────────────────────────────────────────
-   Shared with the console so the two pages read as one product: a dark
-   slate-blue instrument housing, violet reserved for anything interactive,
-   and saturated colour otherwise held back for threat severity. */
-:root{
-  --deck:#0E1418; --panel:#141C22; --raised:#1B252C; --rule:#26313A;
-  --text:#C6D2DA; --mute:#6E828F; --faint:#3B4A55;
-  --accent:#7C6CF0; --accent-2:#5B8FE8; --warn:#C9A23B; --bad:#D8453F;
-  --sans:"Chivo",ui-sans-serif,system-ui,-apple-system,sans-serif;
-  --mono:"Chivo Mono",ui-monospace,"SF Mono",Menlo,monospace;
-}
-*{box-sizing:border-box}
-html,body{height:100%}
-body{
-  margin:0;background:var(--deck);color:var(--text);font-family:var(--sans);
-  display:grid;place-items:center;padding:24px;
-  padding-top:max(24px,env(safe-area-inset-top));
-  padding-bottom:max(24px,env(safe-area-inset-bottom));
-  /* One quiet light source behind the panel. No animation - a sign-in screen
-     that moves is a sign-in screen that distracts. */
-  background-image:
-    radial-gradient(900px 500px at 50% -10%, #1a2430 0%, transparent 70%),
-    radial-gradient(600px 400px at 85% 110%, #161d2b 0%, transparent 70%);
-}
-.shell{width:100%;max-width:412px}
-
-/* wordmark */
-.mark{display:flex;align-items:baseline;gap:9px;margin-bottom:26px;
-  padding-left:2px}
-.mark b{font-size:21px;font-weight:700;letter-spacing:-.035em}
-.mark span{font-size:13px;color:var(--mute);letter-spacing:-.01em}
-.mark i{width:7px;height:7px;background:var(--accent);border-radius:50%;
-  align-self:center;margin-right:1px;
-  box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 22%,transparent)}
-
-/* card */
-form{
-  background:var(--panel);border:1px solid var(--rule);border-radius:10px;
-  padding:26px 24px 22px;box-shadow:0 18px 44px -18px #000a;
-}
-h1{margin:0 0 4px;font-size:16px;font-weight:600;letter-spacing:-.02em}
-.sub{margin:0 0 22px;font-size:13px;color:var(--mute);line-height:1.5}
-
-label{display:block;font-size:12px;color:var(--mute);margin:0 0 6px}
-.field{margin-bottom:14px}
-input{
-  width:100%;background:var(--deck);border:1px solid var(--rule);border-radius:7px;
-  padding:10px 12px;color:var(--text);font:inherit;font-size:14px;
-  transition:border-color .13s ease, box-shadow .13s ease;
-}
-input::placeholder{color:var(--faint)}
-input:focus{
-  outline:none;border-color:var(--accent);
-  box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 16%,transparent);
-}
-input[aria-invalid="true"]{border-color:var(--bad)}
-
-button{
-  width:100%;margin-top:6px;padding:11px 14px;border:0;border-radius:7px;
-  background:var(--accent);color:#fff;font:inherit;font-size:14px;font-weight:600;
-  cursor:pointer;transition:background .13s ease, transform .06s ease;
-}
-button:hover:not(:disabled){background:#8b7cf7}
-button:active:not(:disabled){transform:translateY(1px)}
-button:disabled{opacity:.55;cursor:default}
-button:focus-visible,input:focus-visible{outline:2px solid var(--accent-2);outline-offset:2px}
-
-/* Failure is direction, not mood: say what happened and what to do. */
-.msg{
-  margin:0 0 16px;padding:9px 11px;border-radius:7px;font-size:12.5px;
-  line-height:1.5;border:1px solid transparent;display:none;
-}
-.msg.show{display:block}
-.msg.error{background:color-mix(in srgb,var(--bad) 13%,transparent);
-  border-color:color-mix(in srgb,var(--bad) 42%,transparent);color:#f0b4b1}
-.msg.info{background:color-mix(in srgb,var(--warn) 11%,transparent);
-  border-color:color-mix(in srgb,var(--warn) 36%,transparent);color:#e3cd8e}
-
-.foot{margin-top:18px;padding-top:15px;border-top:1px solid var(--rule);
-  display:flex;justify-content:space-between;gap:12px;
-  font-family:var(--mono);font-size:11px;color:var(--faint)}
-.foot span{display:flex;align-items:center;gap:6px}
-.dot{width:5px;height:5px;border-radius:50%;background:var(--faint)}
-.dot.ok{background:#3E9B82}
-
-.note{margin:14px 2px 0;font-size:11.5px;color:var(--faint);line-height:1.55}
-
-@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+  body {
+    background-color: #050505;
+    background-image: 
+      radial-gradient(circle at 15% 50%, rgba(16, 185, 129, 0.08) 0%, transparent 50%),
+      radial-gradient(circle at 85% 30%, rgba(14, 165, 233, 0.08) 0%, transparent 50%);
+    font-family: 'Inter', sans-serif;
+    color: #e2e8f0;
+  }
+  .glass-panel {
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  }
+  .input-field:focus {
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+  }
 </style>
 </head>
-<body>
-<div class="shell">
-  <div class="mark"><i></i><b>OSentinel</b><span>host security console</span></div>
+<body class="min-h-screen flex items-center justify-center p-4">
 
-  <form id="f" autocomplete="on" novalidate>
-    <h1>Sign in</h1>
-    <p class="sub">This console can suspend and terminate processes on this
-       machine. Your session lasts 12 hours.</p>
-
-    <div class="msg" id="msg" role="alert" aria-live="polite"></div>
-
-    <div class="field">
-      <label for="u">Username</label>
-      <input id="u" name="username" autocomplete="username" required
-             autocapitalize="none" spellcheck="false" placeholder="admin">
+<div class="w-full max-w-md">
+  <!-- Branding -->
+  <div class="flex items-center justify-center gap-3 mb-8">
+    <div class="relative flex items-center justify-center w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.2)]">
+      <i data-lucide="shield-check" class="text-emerald-400 w-6 h-6"></i>
     </div>
-    <div class="field">
-      <label for="p">Password</label>
-      <input id="p" name="password" type="password" autocomplete="current-password"
-             required placeholder="••••••••••">
+    <div class="flex flex-col">
+      <h1 class="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+        OSentinel
+      </h1>
+      <span class="text-xs text-slate-400 font-medium tracking-wide uppercase">AI Threat Prevention</span>
+    </div>
+  </div>
+
+  <!-- Login Card -->
+  <form id="f" autocomplete="on" novalidate class="glass-panel rounded-2xl p-8 relative overflow-hidden">
+    <!-- Top accent line -->
+    <div class="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-emerald-500 to-transparent opacity-50"></div>
+
+    <div class="mb-6">
+      <h2 class="text-lg font-semibold text-white mb-1">Secure Sign In</h2>
+      <p class="text-sm text-slate-400">Authenticate to access the EDR console.</p>
     </div>
 
-    <button id="go" type="submit">Sign in</button>
+    <div class="msg text-sm p-3 rounded-lg mb-4 hidden border" id="msg" role="alert" aria-live="polite"></div>
 
-    <div class="foot">
-      <span><i class="dot ok" id="hdot"></i><span id="hstat">checking agent</span></span>
-      <span id="hname">127.0.0.1</span>
+    <div class="space-y-5">
+      <div>
+        <label for="u" class="block text-xs font-medium text-slate-400 mb-1.5 uppercase tracking-wider">Operator ID</label>
+        <div class="relative">
+          <i data-lucide="user" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
+          <input id="u" name="username" autocomplete="username" required
+                 class="input-field w-full bg-slate-900/50 border border-slate-700/50 rounded-lg py-2.5 pl-10 pr-4 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500/50 transition-all"
+                 placeholder="Enter username">
+        </div>
+      </div>
+
+      <div>
+        <label for="p" class="block text-xs font-medium text-slate-400 mb-1.5 uppercase tracking-wider">Access Token</label>
+        <div class="relative">
+          <i data-lucide="lock" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
+          <input id="p" name="password" type="password" autocomplete="current-password" required
+                 class="input-field w-full bg-slate-900/50 border border-slate-700/50 rounded-lg py-2.5 pl-10 pr-4 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500/50 transition-all"
+                 placeholder="••••••••">
+        </div>
+      </div>
+
+      <button id="go" type="submit" 
+              class="w-full mt-2 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-medium text-sm py-2.5 rounded-lg shadow-lg shadow-emerald-500/20 transition-all active:scale-[0.98] disabled:opacity-50 flex justify-center items-center gap-2">
+        <span>Initialize Session</span>
+        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+      </button>
+    </div>
+
+    <div class="mt-8 pt-6 border-t border-slate-700/50 flex justify-between items-center text-[11px] font-mono text-slate-500">
+      <div class="flex items-center gap-2">
+        <div id="hdot" class="w-2 h-2 rounded-full bg-slate-600"></div>
+        <span id="hstat">CHECKING AGENT</span>
+      </div>
+      <span id="hname" class="text-slate-400">127.0.0.1</span>
     </div>
   </form>
 
-  <p class="note">Running on this machine only. If you did not start this agent,
-     close this page and find out what did.</p>
+  <p class="text-center text-xs text-slate-500 mt-6 max-w-sm mx-auto leading-relaxed">
+    <i data-lucide="info" class="w-3 h-3 inline-block mr-1 -mt-0.5"></i>
+    Running locally. End-to-end encrypted connection. Unauthorized access is strictly prohibited.
+  </p>
 </div>
 
 <script>
+lucide.createIcons();
 const $ = id => document.getElementById(id);
 const msg = (text, kind) => {
   const m = $("msg");
   m.textContent = text;
-  m.className = "msg show " + kind;
+  m.className = `msg p-3 rounded-lg mb-4 text-sm border block ${
+    kind === "error" 
+      ? "bg-red-500/10 border-red-500/20 text-red-400" 
+      : "bg-amber-500/10 border-amber-500/20 text-amber-400"
+  }`;
 };
 
-// Confirm the agent is actually up before the operator types a password into a
-// form that cannot submit. /api/health is deliberately outside the guard.
 (async () => {
   try {
     const r = await fetch("/api/health");
     const d = await r.json();
-    // /api/health reports {ok, queue_depth, dropped, processed}
     const healthy = d.ok === true;
-    $("hstat").textContent = healthy
-      ? (d.dropped ? "agent running, " + d.dropped + " events dropped" : "agent running")
-      : "agent degraded";
+    $("hstat").textContent = healthy ? "AGENT ONLINE" : "AGENT DEGRADED";
     $("hname").textContent = location.host;
-    if (!healthy) $("hdot").classList.remove("ok");
+    if (healthy) {
+      $("hdot").className = "w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-pulse";
+    }
   } catch {
-    $("hdot").classList.remove("ok");
-    $("hstat").textContent = "agent unreachable";
-    msg("The agent is not responding on this port. Start it with "
-        + "`python run.py`, then reload.", "info");
+    $("hstat").textContent = "AGENT UNREACHABLE";
+    msg("Agent offline. Start it with `python run.py`, then reload.", "info");
   }
 })();
 
@@ -165,14 +134,12 @@ $("f").addEventListener("submit", async e => {
   e.preventDefault();
   const u = $("u").value.trim(), p = $("p").value;
   if (!u || !p){
-    msg("Enter both a username and a password.", "error");
+    msg("Enter both Operator ID and Access Token.", "error");
     (!u ? $("u") : $("p")).focus();
     return;
   }
   $("go").disabled = true;
-  $("go").textContent = "Signing in…";
-  $("u").setAttribute("aria-invalid","false");
-  $("p").setAttribute("aria-invalid","false");
+  $("go").querySelector("span").textContent = "Authenticating...";
   try {
     const r = await fetch("/api/login", {
       method: "POST",
@@ -180,20 +147,21 @@ $("f").addEventListener("submit", async e => {
       body: JSON.stringify({username: u, password: p})
     });
     if (r.ok){
-      $("go").textContent = "Signed in";
+      $("go").querySelector("span").textContent = "Authenticated";
       location.href = "/";
       return;
     }
     const d = await r.json().catch(() => ({}));
-    msg(d.detail || "That username and password do not match.", "error");
-    $("p").setAttribute("aria-invalid","true");
+    msg(d.detail || "Authentication failed. Invalid credentials.", "error");
     $("p").value = "";
     $("p").focus();
   } catch {
-    msg("Could not reach the agent. Check that it is still running.", "error");
+    msg("Connection refused. Verify the backend agent is running.", "error");
   } finally {
     $("go").disabled = false;
-    if ($("go").textContent === "Signing in…") $("go").textContent = "Sign in";
+    if ($("go").querySelector("span").textContent === "Authenticating...") {
+      $("go").querySelector("span").textContent = "Initialize Session";
+    }
   }
 });
 
