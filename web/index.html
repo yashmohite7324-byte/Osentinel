@@ -327,7 +327,7 @@
               </div>
               <div className="flex items-center gap-3 text-xs bg-black/40 px-4 py-1.5 rounded-md border border-white/5 shadow-inner">
                 <Icon name="server" className="w-3.5 h-3.5 text-gray-400" />
-                <span className="font-medium text-gray-200">{state?.status?.host?.hostname || 'ASUS-F15'}</span>
+                <span className="font-medium text-gray-200">{state?.status?.host?.hostname || 'LocalHost'}</span>
                 <span className="text-gray-600">|</span>
                 <span className="font-mono text-gray-400">{state?.status?.host?.platform || 'Windows 11'} {state?.status?.host?.arch || 'AMD64'}</span>
                 <span className="text-gray-600">|</span>
@@ -354,7 +354,7 @@
               <div className="h-6 w-px bg-white/10"></div>
               <div className="flex items-center gap-3">
                 <div className="flex flex-col items-end">
-                  <span className="text-xs font-semibold text-gray-200">Asus F15</span>
+                  <span className="text-xs font-semibold text-gray-200">{state?.status?.host?.hostname || 'Local Admin'}</span>
                   <span className="text-[10px] text-indigo-400 font-mono uppercase tracking-widest">System Admin</span>
                 </div>
                 <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-indigo-600 to-emerald-500 p-0.5 shadow-lg shadow-indigo-500/20">
