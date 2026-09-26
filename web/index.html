@@ -47,7 +47,6 @@
       font-family: 'JetBrains Mono', monospace;
     }
 
-    /* Light/Dark custom styles */
     .dark body {
       background-color: #080c14;
       color: #cbd5e1;
@@ -90,7 +89,6 @@
       transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    /* Custom Scrollbar */
     ::-webkit-scrollbar { width: 5px; height: 5px; }
     ::-webkit-scrollbar-track { background: transparent; }
     .dark ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
@@ -104,7 +102,6 @@
   <script type="text/babel">
     const { useState, useEffect, useRef, useMemo } = React;
 
-    // --- UTILS & FETCH (100% Preserved) ---
     const getToken = () => localStorage.getItem("osentinel_token");
     const setToken = (t) => t ? localStorage.setItem("osentinel_token", t) : localStorage.removeItem("osentinel_token");
 
@@ -122,20 +119,16 @@
       return res;
     };
 
-    // Safe Lucide Icon Renderer
     const Icon = ({ name, className = "", onClick, title }) => {
       const iconRef = useRef(null);
       useEffect(() => {
         if (window.lucide && iconRef.current) {
-          window.lucide.createIcons({
-            attrs: { class: className },
-            nameAttr: 'data-lucide',
-            root: iconRef.current
-          });
+          iconRef.current.innerHTML = `<i data-lucide="${name}" class="${className}"></i>`;
+          window.lucide.createIcons({ root: iconRef.current });
         }
       }, [name, className]);
       
-      return <span ref={iconRef} onClick={onClick} title={title} className="inline-flex items-center justify-center flex-shrink-0"><i data-lucide={name}></i></span>;
+      return <span ref={iconRef} onClick={onClick} title={title} className="inline-flex items-center justify-center flex-shrink-0 cursor-pointer" />;
     };
 
     // --- LOGIN SCREEN ---
@@ -183,17 +176,14 @@
             <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mb-4">
               <Icon name="shield-check" className="text-indigo-500 w-8 h-8" />
             </div>
-            
             <h2 className="text-xl font-bold mb-1 text-center">Sign In to Dashboard</h2>
             <p className="text-xs text-slate-500 mb-6 text-center">Authenticate to access live telemetry and threat prevention</p>
-            
             {error && (
               <div className="w-full bg-red-500/10 border border-red-500/20 text-red-500 p-3 rounded-xl text-xs mb-4 flex items-center gap-2">
                 <Icon name="alert-triangle" className="w-4 h-4 flex-shrink-0" />
                 <span>{error}</span>
               </div>
             )}
-            
             <form onSubmit={handleSubmit} className="w-full flex flex-col gap-4">
               <div>
                 <label className="text-xs font-semibold mb-1.5 block text-slate-400">Username / Email</label>
@@ -203,7 +193,6 @@
                     className="input-field w-full rounded-xl py-2.5 pl-10 pr-4 text-sm font-mono focus:outline-none focus:border-indigo-500 transition-colors" />
                 </div>
               </div>
-              
               <div>
                 <label className="text-xs font-semibold mb-1.5 block text-slate-400">Password</label>
                 <div className="relative">
@@ -212,7 +201,6 @@
                     className="input-field w-full rounded-xl py-2.5 pl-10 pr-10 text-sm font-mono focus:outline-none focus:border-indigo-500 transition-colors" />
                 </div>
               </div>
-              
               <button type="submit" className="mt-2 w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-3 rounded-xl transition-all shadow-lg shadow-indigo-600/25 text-sm flex items-center justify-center gap-2">
                 <span>Authenticate Session</span>
                 <Icon name="arrow-right" className="w-4 h-4" />
@@ -223,7 +211,7 @@
       );
     };
 
-    // --- CHATBOT ANALYST ---
+    // --- CHATBOT ---
     const Chatbot = ({ session, hostState }) => {
       const [isOpen, setIsOpen] = useState(false);
       const [messages, setMessages] = useState([]);
@@ -258,14 +246,10 @@
             method: "POST",
             body: JSON.stringify({ session, message: userMsg })
           });
-          if (!res.ok) {
-            const errText = await res.text();
-            throw new Error(`Server returned ${res.status}: ${errText}`);
-          }
+          if (!res.ok) throw new Error(`Server returned ${res.status}`);
           const data = await res.json();
           setMessages(p => [...p, { role: "ai", text: data.reply || "No response received." }]);
         } catch(err) {
-          console.error(err);
           setMessages(p => [...p, { role: "ai", text: "AI Assistant Error: " + err.message }]);
         } finally {
           setLoading(false);
@@ -338,12 +322,12 @@
 
     // --- MAIN DASHBOARD ---
     const Dashboard = ({ state, logout, theme, toggleTheme }) => {
-      const [navSection, setNavSection] = useState("overview"); // overview, detections, processes, telemetry, rules, config
-      const [topTab, setTopTab] = useState("Signals");
-      const [bottomTab, setBottomTab] = useState("Response log");
+      const [viewMode, setViewMode] = useState("overview");
       const [searchTerm, setSearchTerm] = useState("");
+      const [severityFilter, setSeverityFilter] = useState("all");
+      const [isolatedHosts, setIsolatedHosts] = useState({});
+      const [acknowledgedIncidents, setAcknowledgedIncidents] = useState({});
 
-      // Calculate dynamic threat posture risk score
       const riskScore = useMemo(() => {
         const incidents = state?.incidents || [];
         const top = incidents.length > 0 ? incidents[0].score : 0;
@@ -356,7 +340,37 @@
         return Math.min(100.0, finalScore);
       }, [state?.incidents]);
 
-      // Filter signals and events based on search input
+      // Calculate Severity Counts
+      const severityCounts = useMemo(() => {
+        const incidents = state?.incidents || [];
+        let crit = 0, high = 0, med = 0, low = 0;
+        incidents.forEach(i => {
+          if (i.score >= 70) crit++;
+          else if (i.score >= 40) high++;
+          else if (i.score >= 20) med++;
+          else low++;
+        });
+        return { crit, high, med, low, total: incidents.length || 1 };
+      }, [state?.incidents]);
+
+      const filteredIncidents = useMemo(() => {
+        const incidents = state?.incidents || [];
+        return incidents.filter(i => {
+          if (severityFilter === "critical" && i.score < 70) return false;
+          if (severityFilter === "high" && (i.score < 40 || i.score >= 70)) return false;
+          if (severityFilter === "medium" && (i.score < 20 || i.score >= 40)) return false;
+          return true;
+        });
+      }, [state?.incidents, severityFilter]);
+
+      const toggleIsolate = (id) => {
+        setIsolatedHosts(prev => ({ ...prev, [id]: !prev[id] }));
+      };
+
+      const toggleAcknowledge = (id) => {
+        setAcknowledgedIncidents(prev => ({ ...prev, [id]: !prev[id] }));
+      };
+
       const filteredSignals = useMemo(() => {
         const detections = state?.detections || [];
         if (!searchTerm) return detections;
@@ -377,33 +391,22 @@
         );
       }, [state?.events, searchTerm]);
 
-      // Handle Left Sidebar Nav Items
-      const handleNavClick = (section) => {
-        setNavSection(section);
-        if (section === "overview") {
-          setTopTab("Signals");
-          setBottomTab("Response log");
-        } else if (section === "detections") {
-          setTopTab("Signals");
-        } else if (section === "processes") {
-          setBottomTab("Processes");
-        } else if (section === "telemetry") {
-          setTopTab("Raw events");
-          setBottomTab("Raw events");
-        } else if (section === "rules") {
-          setTopTab("Signatures");
-          setBottomTab("Signatures");
-        } else if (section === "config") {
-          setBottomTab("Host");
-        }
-      };
+      const filteredProcesses = useMemo(() => {
+        const procs = state?.processes || [];
+        if (!searchTerm) return procs;
+        return procs.filter(p => 
+          (p.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (p.user || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (p.cmdline || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (p.pid ? String(p.pid) : '').includes(searchTerm)
+        );
+      }, [state?.processes, searchTerm]);
 
       return (
         <div className="flex h-screen w-full overflow-hidden">
-          {/* 1. Left Vertical Navigation Sidebar */}
+          {/* Sidebar */}
           <aside className="w-16 md:w-64 border-r border-slate-200 dark:border-slate-800 flex flex-col justify-between flex-shrink-0 card-panel z-20">
             <div>
-              {/* Logo Header */}
               <div className="h-16 flex items-center px-4 border-b border-slate-200 dark:border-slate-800 gap-3">
                 <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center text-white flex-shrink-0 shadow-lg shadow-indigo-600/30">
                   <Icon name="shield" className="w-5 h-5" />
@@ -414,7 +417,6 @@
                 </div>
               </div>
 
-              {/* Navigation Items */}
               <nav className="p-3 space-y-1.5">
                 {[
                   { id: 'overview', label: 'SOC Overview', icon: 'layout-dashboard' },
@@ -426,10 +428,10 @@
                 ].map((item) => (
                   <button
                     key={item.id}
-                    onClick={() => handleNavClick(item.id)}
+                    onClick={() => setViewMode(item.id)}
                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium transition-all ${
-                      navSection === item.id 
-                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20' 
+                      viewMode === item.id 
+                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20 font-semibold' 
                         : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:text-slate-200'
                     }`}
                   >
@@ -440,7 +442,6 @@
               </nav>
             </div>
 
-            {/* Bottom Actions */}
             <div className="p-3 border-t border-slate-200 dark:border-slate-800 space-y-2">
               <button onClick={toggleTheme} className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
                 <Icon name={theme === 'dark' ? "sun" : "moon"} className="w-4 h-4 text-indigo-500" />
@@ -454,10 +455,10 @@
             </div>
           </aside>
 
-          {/* 2. Main Content Container */}
+          {/* Main Content Area */}
           <div className="flex-1 flex flex-col h-full overflow-hidden">
             
-            {/* Top Operational Header */}
+            {/* Header */}
             <header className="h-16 border-b border-slate-200 dark:border-slate-800 card-panel px-6 flex items-center justify-between flex-shrink-0 z-10">
               <div className="flex items-center gap-4">
                 <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg input-field text-xs font-mono">
@@ -469,7 +470,7 @@
 
                 <div className="flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-semibold border border-emerald-500/30 bg-emerald-500/10 text-emerald-500">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                  <span>LIVE TELEMETRY STREAM</span>
+                  <span className="uppercase tracking-wider font-mono text-[10px]">{viewMode} VIEW</span>
                 </div>
 
                 {state?.status?.response?.mode === "enforcing" ? (
@@ -485,349 +486,472 @@
                 )}
               </div>
 
-              {/* Search Bar & User */}
+              {/* Search */}
               <div className="flex items-center gap-4">
                 <div className="relative w-48 lg:w-64">
                   <Icon name="search" className="absolute left-3 top-2.5 w-3.5 h-3.5 text-slate-400" />
                   <input
                     type="text"
-                    placeholder="Filter telemetry view..."
+                    placeholder={`Search in ${viewMode}...`}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="input-field w-full py-1.5 pl-9 pr-3 rounded-xl text-xs focus:outline-none focus:border-indigo-500 transition-colors"
                   />
                 </div>
-
                 <div className="h-6 w-px bg-slate-700/40"></div>
-
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-500 font-bold text-xs">
-                    SA
-                  </div>
+                <div className="w-8 h-8 rounded-xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-500 font-bold text-xs">
+                  SA
                 </div>
               </div>
             </header>
 
-            {/* Dashboard Main Grid Area */}
+            {/* Content Body */}
             <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
-              
-              {/* TOP ROW: Threat Posture Gauge & Incidents Box */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                
-                {/* Threat Posture Arc Card */}
-                <div className="lg:col-span-4 card-panel p-6 rounded-2xl flex flex-col justify-between relative overflow-hidden">
-                  <div className="flex justify-between items-center mb-4">
-                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
-                      <Icon name="activity" className="w-4 h-4 text-indigo-500" />
-                      Threat Posture Assessment
-                    </span>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">REALTIME</span>
+
+              {/* ================= ENHANCED VIEW 1: SOC OVERVIEW ================= */}
+              {viewMode === "overview" && (
+                <>
+                  {/* Top Dashboard Banner - Severity Distribution */}
+                  <div className="card-panel p-4 rounded-2xl flex flex-col md:flex-row justify-between items-center gap-4 border border-slate-200 dark:border-slate-800">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
+                        <Icon name="bar-chart-2" className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider">Threat Severity Distribution</h3>
+                        <p className="text-[11px] text-slate-400">Breakdown of actively flagged security alerts</p>
+                      </div>
+                    </div>
+
+                    <div className="w-full md:w-2/3 flex flex-col gap-1.5">
+                      <div className="h-3.5 w-full bg-slate-800/60 rounded-full overflow-hidden flex">
+                        <div style={{ width: `${(severityCounts.crit / severityCounts.total) * 100}%` }} className="bg-red-500 h-full transition-all" title="Critical"></div>
+                        <div style={{ width: `${(severityCounts.high / severityCounts.total) * 100}%` }} className="bg-amber-500 h-full transition-all" title="High"></div>
+                        <div style={{ width: `${(severityCounts.med / severityCounts.total) * 100}%` }} className="bg-blue-500 h-full transition-all" title="Medium"></div>
+                        <div style={{ width: `${(severityCounts.low / severityCounts.total) * 100}%` }} className="bg-emerald-500 h-full transition-all" title="Low"></div>
+                      </div>
+                      <div className="flex justify-between items-center text-[10px] font-mono text-slate-400 px-1">
+                        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-500"></span> Critical ({severityCounts.crit})</span>
+                        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500"></span> High ({severityCounts.high})</span>
+                        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500"></span> Medium ({severityCounts.med})</span>
+                        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500"></span> Low ({severityCounts.low})</span>
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="flex flex-col items-center justify-center my-2">
-                    <div className="relative w-48 h-28 flex justify-center">
-                      <svg viewBox="0 0 100 50" className="w-full h-full">
-                        <defs>
-                          <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                            <stop offset="0%" stopColor="#10b981" />
-                            <stop offset="50%" stopColor="#f59e0b" />
-                            <stop offset="100%" stopColor="#ef4444" />
-                          </linearGradient>
-                        </defs>
-                        <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="rgba(148, 163, 184, 0.15)" strokeWidth="12" strokeLinecap="round" />
-                        <path className="gauge-arc" d="M 10 50 A 40 40 0 0 1 90 50" stroke="url(#gaugeGradient)" style={{ strokeDashoffset: 125 - (riskScore / 100) * 125 }} />
-                      </svg>
-                      <div className="absolute bottom-1 flex items-baseline gap-0.5">
-                        <span className={`text-3xl font-extrabold tracking-tight ${riskScore > 80 ? 'text-red-500' : riskScore > 40 ? 'text-amber-500' : 'text-emerald-500'}`}>
-                          {Math.round(riskScore)}
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    {/* Gauge Posture Card */}
+                    <div className="lg:col-span-4 card-panel p-6 rounded-2xl flex flex-col justify-between relative overflow-hidden">
+                      <div className="flex justify-between items-center mb-4">
+                        <span className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                          <Icon name="activity" className="w-4 h-4 text-indigo-500" />
+                          Threat Posture Gauge
                         </span>
-                        <span className="text-sm font-bold text-slate-400">%</span>
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">LIVE MONITORING</span>
                       </div>
-                    </div>
 
-                    <div className={`mt-3 text-xs font-extrabold uppercase tracking-widest ${riskScore > 80 ? 'text-red-500' : riskScore > 40 ? 'text-amber-500' : 'text-emerald-500'}`}>
-                      {riskScore >= 100 ? "MAXIMUM RISK LEVEL" : riskScore > 80 ? "CRITICAL THREAT" : riskScore > 40 ? "ELEVATED RISK" : "SYSTEM SECURE"}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-slate-200 dark:border-slate-800 text-center">
-                    <div className="p-2 rounded-xl input-field">
-                      <div className="text-[10px] text-slate-400 uppercase font-medium">Active Incidents</div>
-                      <div className="text-base font-bold text-slate-200">{state?.incidents?.length || 0}</div>
-                    </div>
-                    <div className="p-2 rounded-xl input-field">
-                      <div className="text-[10px] text-slate-400 uppercase font-medium">Critical Signals</div>
-                      <div className="text-base font-bold text-red-400">{state?.incidents?.filter(i => i.score > 50).length || 0}</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Active Incidents Container Card */}
-                <div className="lg:col-span-8 card-panel p-6 rounded-2xl flex flex-col">
-                  <div className="flex justify-between items-center mb-4">
-                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
-                      <Icon name="alert-triangle" className="w-4 h-4 text-amber-500" />
-                      Active Incident Queue
-                    </span>
-                    <span className="text-xs font-medium text-slate-400">{state?.incidents?.length || 0} Pending Analysis</span>
-                  </div>
-
-                  <div className="flex-1 overflow-y-auto space-y-3 max-h-[220px] pr-1">
-                    {(!state?.incidents || state.incidents.length === 0) && (
-                      <div className="h-full flex flex-col items-center justify-center py-10 text-slate-400 text-xs">
-                        <Icon name="check-circle-2" className="w-8 h-8 text-emerald-500 mb-2" />
-                        <span>No threat incidents detected in queue</span>
-                      </div>
-                    )}
-                    {state?.incidents?.map(i => (
-                      <div 
-                        key={i.id} 
-                        onClick={() => document.dispatchEvent(new CustomEvent("analyze_incident", { detail: i.id }))}
-                        className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-indigo-500/50 input-field cursor-pointer transition-all flex flex-col sm:flex-row justify-between gap-4"
-                      >
-                        <div className="flex gap-3">
-                          <div className={`px-2.5 py-1 rounded-lg text-center h-fit text-[10px] font-bold ${i.score > 80 ? 'bg-red-500/20 text-red-500 border border-red-500/30' : 'bg-amber-500/20 text-amber-500 border border-amber-500/30'}`}>
-                            {i.score > 80 ? 'CRIT' : 'HIGH'}<br/>
-                            <span className="text-sm">{Math.round(i.score)}</span>
-                          </div>
-                          <div>
-                            <h4 className="text-xs font-bold text-indigo-400 font-mono mb-1">{i.detections[0]?.rule_id || "Suspicious Execution"}</h4>
-                            <p className="text-xs text-slate-300">{i.detections[0]?.title || "Behavioral anomaly detected on endpoint process"}</p>
-                            
-                            {i.detections[0]?.remediation && (
-                              <div className="mt-2 p-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-[11px] font-mono text-emerald-400">
-                                💡 Suggested Remediation: {i.detections[0].remediation}
-                              </div>
-                            )}
+                      <div className="flex flex-col items-center justify-center my-2">
+                        <div className="relative w-52 h-30 flex justify-center">
+                          <svg viewBox="0 0 100 50" className="w-full h-full">
+                            <defs>
+                              <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stopColor="#10b981" />
+                                <stop offset="50%" stopColor="#f59e0b" />
+                                <stop offset="100%" stopColor="#ef4444" />
+                              </linearGradient>
+                            </defs>
+                            <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="rgba(148, 163, 184, 0.15)" strokeWidth="12" strokeLinecap="round" />
+                            <path className="gauge-arc" d="M 10 50 A 40 40 0 0 1 90 50" stroke="url(#gaugeGradient)" style={{ strokeDashoffset: 125 - (riskScore / 100) * 125 }} />
+                          </svg>
+                          <div className="absolute bottom-1 flex items-baseline gap-0.5">
+                            <span className={`text-4xl font-extrabold tracking-tight ${riskScore > 80 ? 'text-red-500' : riskScore > 40 ? 'text-amber-500' : 'text-emerald-500'}`}>
+                              {Math.round(riskScore)}
+                            </span>
+                            <span className="text-sm font-bold text-slate-400">%</span>
                           </div>
                         </div>
 
-                        <div className="flex sm:flex-col justify-between items-end flex-shrink-0 text-[10px] text-slate-400 font-mono">
-                          <span>ID: {i.id.substring(0,8)}</span>
-                          <span className="text-indigo-400">{i.detections.length} signals &gt;</span>
+                        <div className={`mt-3 text-xs font-extrabold uppercase tracking-widest ${riskScore > 80 ? 'text-red-500' : riskScore > 40 ? 'text-amber-500' : 'text-emerald-500'}`}>
+                          {riskScore >= 100 ? "MAXIMUM RISK LEVEL" : riskScore > 80 ? "CRITICAL THREAT" : riskScore > 40 ? "ELEVATED RISK" : "SYSTEM SECURE"}
                         </div>
                       </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
 
-              {/* MIDDLE ROW: KPI Metrics Sparkline Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {[
-                  { label: "Memory Allocation", value: `${state?.metrics?.mem_percent?.toFixed(1) || '0.0'}%`, key: 'mem_percent', color: '#f97316' },
-                  { label: "CPU Core Load", value: `${state?.metrics?.cpu_percent?.toFixed(1) || '0.0'}%`, key: 'cpu_percent', color: '#6366f1' },
-                  { label: "Kernel Switches", value: `${state?.metrics?.ctx_switches_per_s?.toFixed(0) || 0}/s`, key: 'ctx_switches_per_s', color: '#10b981' },
-                  { label: "Active Process Pool", value: state?.metrics?.process_count || 0, key: 'process_count', color: '#3b82f6' },
-                ].map((m, idx) => (
-                  <div key={idx} className="card-panel p-4 rounded-2xl flex flex-col justify-between">
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="text-xs text-slate-400 font-medium">{m.label}</span>
-                      <span className="text-xs font-bold font-mono">{m.value}</span>
+                      <div className="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-slate-200 dark:border-slate-800 text-center">
+                        <div className="p-2.5 rounded-xl input-field">
+                          <div className="text-[10px] text-slate-400 uppercase font-medium">Active Incidents</div>
+                          <div className="text-lg font-bold text-slate-200">{state?.incidents?.length || 0}</div>
+                        </div>
+                        <div className="p-2.5 rounded-xl input-field">
+                          <div className="text-[10px] text-slate-400 uppercase font-medium">High/Crit Severity</div>
+                          <div className="text-lg font-bold text-red-400">{severityCounts.crit + severityCounts.high}</div>
+                        </div>
+                      </div>
                     </div>
-                    <svg className="w-full h-9 mt-2" viewBox="0 0 100 30" preserveAspectRatio="none">
-                      <polyline 
-                        fill="none" 
-                        stroke={m.color} 
-                        strokeWidth="2" 
-                        points={(state?.history || []).map((h, i, arr) => `${(i / (arr.length || 1)) * 100},${30 - (Math.min(h[m.key] || 0, 100) / 100) * 30}`).join(' ')} 
-                      />
-                    </svg>
-                  </div>
-                ))}
-              </div>
 
-              {/* BOTTOM SECTION: Dual Tab Telemetry Tables */}
-              <div className="card-panel rounded-2xl p-6 space-y-4">
-                
-                {/* Top Tab Bar */}
-                <div className="flex flex-wrap items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3 gap-2">
-                  <div className="flex gap-4 text-xs font-medium">
-                    {["Signals", "Signatures", "Raw events"].map(t => (
-                      <button 
-                        key={t}
-                        onClick={() => setTopTab(t)}
-                        className={`pb-2 transition-all ${topTab === t ? "border-b-2 border-indigo-500 text-indigo-500 font-bold" : "text-slate-400 hover:text-slate-200"}`}
-                      >
-                        {t}
-                      </button>
-                    ))}
-                  </div>
-                  <span className="text-xs text-slate-400 font-mono">Live Ingestion Stream</span>
-                </div>
+                    {/* ENHANCED INCIDENT QUEUE WITH TRIAGE & FILTERS */}
+                    <div className="lg:col-span-8 card-panel p-6 rounded-2xl flex flex-col justify-between">
+                      <div className="flex flex-wrap justify-between items-center gap-3 mb-4 border-b border-slate-200 dark:border-slate-800/80 pb-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-ping"></div>
+                          <span className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+                            <Icon name="alert-triangle" className="w-4 h-4 text-amber-500" />
+                            Threat Incident Queue & Triage
+                          </span>
+                        </div>
 
-                {/* Telemetry Display Grid */}
-                <div className="overflow-x-auto min-h-[200px]">
-                  {topTab === "Signals" && (
-                    <table className="w-full text-xs text-left">
-                      <thead className="text-slate-400 font-medium border-b border-slate-200 dark:border-slate-800">
-                        <tr>
-                          <th className="py-2">Timestamp</th>
-                          <th className="py-2">Category</th>
-                          <th className="py-2">Rule ID</th>
-                          <th className="py-2">Target Entity</th>
-                          <th className="py-2">Detection Detail</th>
-                        </tr>
-                      </thead>
-                      <tbody className="font-mono text-[11px] divide-y divide-slate-200 dark:divide-slate-800/50">
-                        {filteredSignals.slice(0, 50).map((d, i) => (
-                          <tr key={i} className="hover:bg-slate-500/5 transition-colors">
-                            <td className="py-2.5 text-slate-400">{new Date((d.ts || 0) * 1000).toLocaleTimeString()}</td>
-                            <td className="py-2.5"><span className="px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">{d.category || 'system'}</span></td>
-                            <td className="py-2.5 text-slate-200 font-bold">{d.rule_id}</td>
-                            <td className="py-2.5 text-emerald-400">{d.entity || '-'}</td>
-                            <td className="py-2.5 text-slate-400">{d.title || d.detail || '-'}</td>
-                          </tr>
-                        ))}
-                        {filteredSignals.length === 0 && (
-                          <tr><td colSpan="5" className="py-8 text-center text-slate-500">No signals matching filter...</td></tr>
+                        {/* Severity Quick Filter Pills */}
+                        <div className="flex items-center gap-1.5 bg-slate-900/60 p-1 rounded-xl border border-slate-800 text-[11px] font-medium">
+                          {['all', 'critical', 'high', 'medium'].map(sev => (
+                            <button
+                              key={sev}
+                              onClick={() => setSeverityFilter(sev)}
+                              className={`px-2.5 py-1 rounded-lg capitalize transition-all ${
+                                severityFilter === sev
+                                  ? 'bg-indigo-600 text-white font-semibold shadow-sm'
+                                  : 'text-slate-400 hover:text-slate-200'
+                              }`}
+                            >
+                              {sev}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Incident Queue List */}
+                      <div className="flex-1 overflow-y-auto space-y-3 max-h-[310px] pr-1">
+                        {filteredIncidents.length === 0 && (
+                          <div className="h-full flex flex-col items-center justify-center py-12 text-slate-400 text-xs gap-2">
+                            <Icon name="check-circle-2" className="w-10 h-10 text-emerald-500" />
+                            <span className="font-semibold text-slate-300">Queue Clear</span>
+                            <span className="text-[11px] text-slate-500">No active threats matching current filter criteria</span>
+                          </div>
                         )}
-                      </tbody>
-                    </table>
-                  )}
+                        
+                        {filteredIncidents.map(i => {
+                          const isCrit = i.score >= 70;
+                          const isHigh = i.score >= 40;
+                          const badgeColor = isCrit ? "bg-red-500/20 text-red-500 border-red-500/30" : isHigh ? "bg-amber-500/20 text-amber-500 border-amber-500/30" : "bg-blue-500/20 text-blue-400 border-blue-500/30";
+                          const barColor = isCrit ? "bg-red-500" : isHigh ? "bg-amber-500" : "bg-blue-500";
+                          const isIsolated = isolatedHosts[i.id];
+                          const isAck = acknowledgedIncidents[i.id];
 
-                  {topTab === "Raw events" && (
-                    <table className="w-full text-xs text-left">
-                      <thead className="text-slate-400 font-medium border-b border-slate-200 dark:border-slate-800">
-                        <tr>
-                          <th className="py-2">Timestamp</th>
-                          <th className="py-2">Category</th>
-                          <th className="py-2">Action</th>
-                          <th className="py-2">Process PID</th>
-                          <th className="py-2">Path / Entity</th>
-                        </tr>
-                      </thead>
-                      <tbody className="font-mono text-[11px] divide-y divide-slate-200 dark:divide-slate-800/50">
-                        {filteredEvents.slice(0, 50).map((e, i) => (
-                          <tr key={i} className="hover:bg-slate-500/5 transition-colors">
-                            <td className="py-2.5 text-slate-400">{new Date((e.ts || 0) * 1000).toLocaleTimeString()}</td>
-                            <td className="py-2.5 text-slate-300">{e.category}</td>
-                            <td className="py-2.5 text-indigo-400">{e.action}</td>
-                            <td className="py-2.5 text-slate-300">{(e.attrs?.pid || e.pid) ? `${e.attrs?.pid || e.pid}` : '-'}</td>
-                            <td className="py-2.5 text-slate-400 truncate max-w-xs">{e.entity || '-'}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  )}
+                          return (
+                            <div key={i.id} className={`p-4 rounded-xl border ${isAck ? 'border-slate-800 opacity-60' : 'border-slate-200 dark:border-slate-800'} hover:border-indigo-500/60 input-field transition-all flex flex-col gap-3 group`}>
+                              <div className="flex flex-col sm:flex-row items-start justify-between gap-3">
+                                <div className="flex items-start gap-3">
+                                  <div className={`px-2.5 py-1.5 rounded-xl text-center flex flex-col items-center justify-center border ${badgeColor}`}>
+                                    <span className="text-[9px] font-black tracking-wider uppercase">{isCrit ? 'CRIT' : isHigh ? 'HIGH' : 'MED'}</span>
+                                    <span className="text-sm font-extrabold font-mono">{Math.round(i.score)}</span>
+                                  </div>
 
-                  {topTab === "Signatures" && (
-                    <div className="p-4 text-xs text-slate-400 space-y-2">
-                      <p className="font-bold text-slate-200">Loaded Detection Engine Rules</p>
-                      <p>Total Rules Active: {state?.status?.detectors?.rules_loaded || 0}</p>
-                      <p>Active YARA Definitions: {state?.status?.detectors?.yara_files_loaded || 0}</p>
+                                  <div>
+                                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                      <h4 className="text-xs font-bold text-indigo-400 font-mono">{i.detections[0]?.rule_id || "Behavioral Threat Trigger"}</h4>
+                                      <span className="text-[10px] font-mono text-slate-500">ID: {i.id.substring(0,8)}</span>
+                                      {isIsolated && <span className="text-[10px] px-2 py-0.2 rounded bg-red-500/20 text-red-400 border border-red-500/30 font-semibold">ISOLATED</span>}
+                                      {isAck && <span className="text-[10px] px-2 py-0.2 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-semibold">ACKNOWLEDGED</span>}
+                                    </div>
+                                    <p className="text-xs text-slate-300 leading-snug">{i.detections[0]?.title || "Suspicious system activity detected across endpoint process hierarchy."}</p>
+                                  </div>
+                                </div>
+
+                                {/* Triage Quick Actions */}
+                                <div className="flex items-center gap-1.5 flex-shrink-0 self-end sm:self-start">
+                                  <button 
+                                    onClick={() => toggleIsolate(i.id)}
+                                    title={isIsolated ? "Restore Host Connectivity" : "Isolate Endpoint"}
+                                    className={`p-1.5 rounded-lg text-[11px] font-medium transition-all border ${
+                                      isIsolated 
+                                        ? 'bg-red-600 text-white border-red-500' 
+                                        : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-red-400 hover:border-red-500/50'
+                                    }`}
+                                  >
+                                    <Icon name="wifi-off" className="w-3.5 h-3.5" />
+                                  </button>
+
+                                  <button 
+                                    onClick={() => toggleAcknowledge(i.id)}
+                                    title="Acknowledge Incident"
+                                    className={`p-1.5 rounded-lg text-[11px] font-medium transition-all border ${
+                                      isAck 
+                                        ? 'bg-emerald-600 text-white border-emerald-500' 
+                                        : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-emerald-400 hover:border-emerald-500/50'
+                                    }`}
+                                  >
+                                    <Icon name="check-square" className="w-3.5 h-3.5" />
+                                  </button>
+
+                                  <button 
+                                    onClick={() => document.dispatchEvent(new CustomEvent("analyze_incident", { detail: i.id }))}
+                                    className="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-medium transition-all flex items-center gap-1.5 shadow-md shadow-indigo-600/20"
+                                  >
+                                    <Icon name="bot" className="w-3.5 h-3.5" />
+                                    <span>AI Triage</span>
+                                  </button>
+                                </div>
+                              </div>
+
+                              <div className="w-full bg-slate-800/40 h-1.5 rounded-full overflow-hidden">
+                                <div className={`h-full ${barColor}`} style={{ width: `${Math.min(100, i.score)}%` }}></div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
-                  )}
-                </div>
-
-                {/* Bottom Inspector Tabs */}
-                <div className="border-t border-slate-200 dark:border-slate-800 pt-4">
-                  <div className="flex gap-4 text-xs font-medium border-b border-slate-200 dark:border-slate-800 pb-2 mb-3">
-                    {["Response log", "Processes", "Host", "Pipeline"].map(bt => (
-                      <button 
-                        key={bt}
-                        onClick={() => setBottomTab(bt)}
-                        className={`transition-all ${bottomTab === bt ? "text-indigo-500 font-bold border-b-2 border-indigo-500 pb-2" : "text-slate-400 hover:text-slate-200"}`}
-                      >
-                        {bt}
-                      </button>
-                    ))}
                   </div>
 
-                  <div className="overflow-x-auto min-h-[160px]">
-                    {bottomTab === "Response log" && (
-                      <table className="w-full text-xs text-left">
-                        <thead className="text-slate-400 font-medium">
-                          <tr>
-                            <th className="py-1.5">Timestamp</th>
-                            <th className="py-1.5">Mitigation Action</th>
-                            <th className="py-1.5">Target Entity</th>
-                            <th className="py-1.5">Execution Outcome</th>
-                            <th className="py-1.5">Reason / Rule Trigger</th>
-                          </tr>
-                        </thead>
-                        <tbody className="font-mono text-[11px] divide-y divide-slate-200 dark:divide-slate-800/50">
-                          {state?.actions?.map((a, i) => (
-                            <tr key={i} className="hover:bg-slate-500/5">
-                              <td className="py-2 text-slate-400">{new Date((a.ts || 0) * 1000).toLocaleTimeString()}</td>
-                              <td className="py-2"><span className="bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded border border-purple-500/30">{a.action}</span></td>
-                              <td className="py-2 text-slate-300">{a.target}</td>
-                              <td className="py-2"><span className="text-slate-400 border border-slate-700 px-2 py-0.5 rounded">{a.dry_run ? 'DRY RUN / WITHHELD' : a.executed ? 'EXECUTED' : 'FAILED'}</span></td>
-                              <td className="py-2 text-slate-400">{a.detail}</td>
-                            </tr>
-                          ))}
-                          {(!state?.actions || state.actions.length === 0) && (
-                            <tr><td colSpan="5" className="py-6 text-center text-slate-500">No mitigation actions logged yet</td></tr>
-                          )}
-                        </tbody>
-                      </table>
-                    )}
+                  {/* Sparkline Metrics & Live Activity Stream Row */}
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    {/* KPI Metrics Column */}
+                    <div className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {[
+                        { label: "Memory Allocation", value: `${state?.metrics?.mem_percent?.toFixed(1) || '0.0'}%`, key: 'mem_percent', color: '#f97316', status: state?.metrics?.mem_percent > 85 ? 'High' : 'Normal' },
+                        { label: "CPU Core Load", value: `${state?.metrics?.cpu_percent?.toFixed(1) || '0.0'}%`, key: 'cpu_percent', color: '#6366f1', status: state?.metrics?.cpu_percent > 80 ? 'Elevated' : 'Normal' },
+                        { label: "Kernel Switches", value: `${state?.metrics?.ctx_switches_per_s?.toFixed(0) || 0}/s`, key: 'ctx_switches_per_s', color: '#10b981', status: 'Optimal' },
+                        { label: "Active Process Pool", value: state?.metrics?.process_count || 0, key: 'process_count', color: '#3b82f6', status: 'Stable' },
+                      ].map((m, idx) => (
+                        <div key={idx} className="card-panel p-4 rounded-2xl flex flex-col justify-between">
+                          <div className="flex justify-between items-center mb-1">
+                            <span className="text-xs text-slate-400 font-medium">{m.label}</span>
+                            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300">{m.status}</span>
+                          </div>
+                          <div className="flex items-baseline justify-between mt-1">
+                            <span className="text-xl font-bold font-mono text-slate-100">{m.value}</span>
+                            <span className="text-[10px] text-emerald-400 font-mono">▲ Live</span>
+                          </div>
+                          <svg className="w-full h-8 mt-2" viewBox="0 0 100 30" preserveAspectRatio="none">
+                            <polyline 
+                              fill="none" 
+                              stroke={m.color} 
+                              strokeWidth="2" 
+                              points={(state?.history || []).map((h, i, arr) => `${(i / (arr.length || 1)) * 100},${30 - (Math.min(h[m.key] || 0, 100) / 100) * 30}`).join(' ')} 
+                            />
+                          </svg>
+                        </div>
+                      ))}
+                    </div>
 
-                    {bottomTab === "Processes" && (
-                      <table className="w-full text-xs text-left">
-                        <thead className="text-slate-400 font-medium">
-                          <tr>
-                            <th className="py-1.5">PID</th>
-                            <th className="py-1.5">Process Name</th>
-                            <th className="py-1.5">User</th>
-                            <th className="py-1.5">CPU %</th>
-                            <th className="py-1.5">Command Line</th>
-                          </tr>
-                        </thead>
-                        <tbody className="font-mono text-[11px] divide-y divide-slate-200 dark:divide-slate-800/50">
-                          {state?.processes?.slice(0, 15).map((p, i) => (
-                            <tr key={i} className="hover:bg-slate-500/5">
-                              <td className="py-2 text-indigo-400">{p.pid}</td>
-                              <td className="py-2 font-bold text-slate-200">{p.name}</td>
-                              <td className="py-2 text-slate-400">{p.user}</td>
-                              <td className="py-2 text-amber-500">{p.cpu}</td>
-                              <td className="py-2 text-slate-400 truncate max-w-md">{p.cmdline || '-'}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    )}
-
-                    {bottomTab === "Host" && (
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-xs font-mono text-slate-300 p-2">
-                        <div><span className="text-slate-500">Hostname:</span> {state?.status?.host?.hostname}</div>
-                        <div><span className="text-slate-500">Platform:</span> {state?.status?.host?.platform}</div>
-                        <div><span className="text-slate-500">Architecture:</span> {state?.status?.host?.arch}</div>
-                        <div><span className="text-slate-500">Kernel:</span> {state?.status?.host?.kernel}</div>
-                        <div><span className="text-slate-500">Uptime:</span> {Math.round((state?.status?.host?.uptime_s || 0) / 3600)} hrs</div>
+                    {/* LIVE ACTIVITY TICKER WIDGET */}
+                    <div className="lg:col-span-4 card-panel p-4 rounded-2xl flex flex-col justify-between border border-slate-200 dark:border-slate-800">
+                      <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800/80 pb-2.5 mb-2">
+                        <div className="flex items-center gap-2">
+                          <Icon name="rss" className="w-4 h-4 text-indigo-400" />
+                          <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">Live Event Ticker</span>
+                        </div>
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
                       </div>
-                    )}
 
-                    {bottomTab === "Pipeline" && (
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs font-mono text-slate-300 p-2">
-                        <div><span className="text-slate-500">Queue Depth:</span> {state?.status?.pipeline?.queue_depth}</div>
-                        <div><span className="text-slate-500">Events Processed:</span> {state?.status?.pipeline?.events_processed}</div>
-                        <div><span className="text-slate-500">Events Dropped:</span> {state?.status?.pipeline?.events_dropped}</div>
-                        <div><span className="text-slate-500">Throughput:</span> {state?.status?.pipeline?.throughput_eps} EPS</div>
+                      <div className="flex-1 overflow-y-auto max-h-[160px] space-y-2 font-mono text-[11px] pr-1">
+                        {(!state?.events || state.events.length === 0) && (
+                          <div className="text-center text-slate-500 py-6 text-xs font-sans">Awaiting telemetry ingestion...</div>
+                        )}
+                        {state?.events?.slice(0, 6).map((ev, idx) => (
+                          <div key={idx} className="p-2 rounded-lg input-field flex items-center justify-between gap-2 border border-slate-800/40">
+                            <div className="flex items-center gap-2 truncate">
+                              <span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
+                              <span className="text-indigo-400 font-bold">{ev.action || 'EVENT'}</span>
+                              <span className="text-slate-400 truncate max-w-[120px]">{ev.entity || ev.category}</span>
+                            </div>
+                            <span className="text-[10px] text-slate-500 flex-shrink-0">{new Date((ev.ts || 0) * 1000).toLocaleTimeString()}</span>
+                          </div>
+                        ))}
                       </div>
-                    )}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* ================= VIEW 2: SIGNAL DETECTIONS ================= */}
+              {viewMode === "detections" && (
+                <div className="card-panel p-6 rounded-2xl space-y-4">
+                  <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
+                    <h3 className="text-sm font-bold text-indigo-400 flex items-center gap-2">
+                      <Icon name="shield-alert" className="w-4 h-4" />
+                      Signal Detections & Rule Triggers
+                    </h3>
+                    <span className="text-xs font-mono text-slate-400">{filteredSignals.length} Signals Captured</span>
+                  </div>
+
+                  <table className="w-full text-xs text-left">
+                    <thead className="text-slate-400 font-medium border-b border-slate-200 dark:border-slate-800">
+                      <tr>
+                        <th className="py-2">Timestamp</th>
+                        <th className="py-2">Category</th>
+                        <th className="py-2">Rule ID</th>
+                        <th className="py-2">Target Entity</th>
+                        <th className="py-2">Detection Detail</th>
+                      </tr>
+                    </thead>
+                    <tbody className="font-mono text-[11px] divide-y divide-slate-200 dark:divide-slate-800/50">
+                      {filteredSignals.map((d, i) => (
+                        <tr key={i} className="hover:bg-slate-500/5 transition-colors">
+                          <td className="py-2.5 text-slate-400">{new Date((d.ts || 0) * 1000).toLocaleTimeString()}</td>
+                          <td className="py-2.5"><span className="px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">{d.category || 'system'}</span></td>
+                          <td className="py-2.5 text-slate-200 font-bold">{d.rule_id}</td>
+                          <td className="py-2.5 text-emerald-400">{d.entity || '-'}</td>
+                          <td className="py-2.5 text-slate-400">{d.title || d.detail || '-'}</td>
+                        </tr>
+                      ))}
+                      {filteredSignals.length === 0 && (
+                        <tr><td colSpan="5" className="py-8 text-center text-slate-500">No detection signals matching filter...</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* ================= VIEW 3: PROCESS POOL ================= */}
+              {viewMode === "processes" && (
+                <div className="card-panel p-6 rounded-2xl space-y-4">
+                  <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
+                    <h3 className="text-sm font-bold text-indigo-400 flex items-center gap-2">
+                      <Icon name="cpu" className="w-4 h-4" />
+                      Active Endpoint Process Pool
+                    </h3>
+                    <span className="text-xs font-mono text-slate-400">{filteredProcesses.length} Running Processes</span>
+                  </div>
+
+                  <table className="w-full text-xs text-left">
+                    <thead className="text-slate-400 font-medium border-b border-slate-200 dark:border-slate-800">
+                      <tr>
+                        <th className="py-2">PID</th>
+                        <th className="py-2">Process Name</th>
+                        <th className="py-2">User / Owner</th>
+                        <th className="py-2">CPU %</th>
+                        <th className="py-2">Command Line</th>
+                      </tr>
+                    </thead>
+                    <tbody className="font-mono text-[11px] divide-y divide-slate-200 dark:divide-slate-800/50">
+                      {filteredProcesses.map((p, i) => (
+                        <tr key={i} className="hover:bg-slate-500/5 transition-colors">
+                          <td className="py-2.5 text-indigo-400">{p.pid}</td>
+                          <td className="py-2.5 font-bold text-slate-200">{p.name}</td>
+                          <td className="py-2.5 text-slate-400">{p.user}</td>
+                          <td className="py-2.5 text-amber-500">{p.cpu}</td>
+                          <td className="py-2.5 text-slate-400 truncate max-w-md">{p.cmdline || '-'}</td>
+                        </tr>
+                      ))}
+                      {filteredProcesses.length === 0 && (
+                        <tr><td colSpan="5" className="py-8 text-center text-slate-500">No active processes found matching search filter...</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* ================= VIEW 4: RAW TELEMETRY ================= */}
+              {viewMode === "telemetry" && (
+                <div className="card-panel p-6 rounded-2xl space-y-4">
+                  <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
+                    <h3 className="text-sm font-bold text-indigo-400 flex items-center gap-2">
+                      <Icon name="activity" className="w-4 h-4" />
+                      Raw Endpoint Telemetry Stream
+                    </h3>
+                    <span className="text-xs font-mono text-slate-400">{filteredEvents.length} Events Ingested</span>
+                  </div>
+
+                  <table className="w-full text-xs text-left">
+                    <thead className="text-slate-400 font-medium border-b border-slate-200 dark:border-slate-800">
+                      <tr>
+                        <th className="py-2">Timestamp</th>
+                        <th className="py-2">Category</th>
+                        <th className="py-2">Action</th>
+                        <th className="py-2">Process PID</th>
+                        <th className="py-2">Target Entity / Path</th>
+                      </tr>
+                    </thead>
+                    <tbody className="font-mono text-[11px] divide-y divide-slate-200 dark:divide-slate-800/50">
+                      {filteredEvents.map((e, i) => (
+                        <tr key={i} className="hover:bg-slate-500/5 transition-colors">
+                          <td className="py-2.5 text-slate-400">{new Date((e.ts || 0) * 1000).toLocaleTimeString()}</td>
+                          <td className="py-2.5 text-slate-300">{e.category}</td>
+                          <td className="py-2.5 text-indigo-400">{e.action}</td>
+                          <td className="py-2.5 text-slate-300">{(e.attrs?.pid || e.pid) ? `${e.attrs?.pid || e.pid}` : '-'}</td>
+                          <td className="py-2.5 text-slate-400 truncate max-w-xs">{e.entity || '-'}</td>
+                        </tr>
+                      ))}
+                      {filteredEvents.length === 0 && (
+                        <tr><td colSpan="5" className="py-8 text-center text-slate-500">No raw events matching search filter...</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* ================= VIEW 5: YARA SIGNATURES ================= */}
+              {viewMode === "rules" && (
+                <div className="card-panel p-6 rounded-2xl space-y-6">
+                  <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
+                    <h3 className="text-sm font-bold text-indigo-400 flex items-center gap-2">
+                      <Icon name="file-code" className="w-4 h-4" />
+                      Detection Engine Rules & YARA Signatures
+                    </h3>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="p-4 rounded-xl input-field flex flex-col justify-between">
+                      <span className="text-xs text-slate-400 font-semibold">Loaded Rule Set</span>
+                      <span className="text-2xl font-bold font-mono text-indigo-400 mt-2">{state?.status?.detectors?.rules_loaded || 0} Rules</span>
+                    </div>
+                    <div className="p-4 rounded-xl input-field flex flex-col justify-between">
+                      <span className="text-xs text-slate-400 font-semibold">Active YARA Files</span>
+                      <span className="text-2xl font-bold font-mono text-emerald-400 mt-2">{state?.status?.detectors?.yara_files_loaded || 0} Rulesets</span>
+                    </div>
+                    <div className="p-4 rounded-xl input-field flex flex-col justify-between">
+                      <span className="text-xs text-slate-400 font-semibold">Engine Status</span>
+                      <span className="text-2xl font-bold font-mono text-blue-400 mt-2">Active Scanning</span>
+                    </div>
                   </div>
                 </div>
+              )}
 
-              </div>
+              {/* ================= VIEW 6: AGENT CONFIG ================= */}
+              {viewMode === "config" && (
+                <div className="card-panel p-6 rounded-2xl space-y-6">
+                  <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
+                    <h3 className="text-sm font-bold text-indigo-400 flex items-center gap-2">
+                      <Icon name="server" className="w-4 h-4" />
+                      Agent Host Status & Pipeline Diagnostic
+                    </h3>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="p-4 rounded-xl input-field space-y-3 font-mono text-xs">
+                      <h4 className="font-bold text-slate-200 border-b border-slate-800 pb-2">Host Metadata</h4>
+                      <div><span className="text-slate-500">Hostname:</span> {state?.status?.host?.hostname}</div>
+                      <div><span className="text-slate-500">Platform:</span> {state?.status?.host?.platform}</div>
+                      <div><span className="text-slate-500">Architecture:</span> {state?.status?.host?.arch}</div>
+                      <div><span className="text-slate-500">Kernel Version:</span> {state?.status?.host?.kernel}</div>
+                      <div><span className="text-slate-500">Uptime:</span> {Math.round((state?.status?.host?.uptime_s || 0) / 3600)} hrs</div>
+                    </div>
+
+                    <div className="p-4 rounded-xl input-field space-y-3 font-mono text-xs">
+                      <h4 className="font-bold text-slate-200 border-b border-slate-800 pb-2">Pipeline Diagnostics</h4>
+                      <div><span className="text-slate-500">Queue Depth:</span> {state?.status?.pipeline?.queue_depth}</div>
+                      <div><span className="text-slate-500">Events Processed:</span> {state?.status?.pipeline?.events_processed}</div>
+                      <div><span className="text-slate-500">Events Dropped:</span> {state?.status?.pipeline?.events_dropped}</div>
+                      <div><span className="text-slate-500">Throughput:</span> {state?.status?.pipeline?.throughput_eps} EPS</div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
             </div>
           </div>
 
-          {/* AI Chat Analyst Assistant */}
           <Chatbot session="react_client" hostState={state} />
         </div>
       );
     };
 
-    // --- MAIN REACT ROOT ---
+    // --- APP ROOT ---
     const App = () => {
       const [token, setTokenState] = useState(getToken());
       const [state, setState] = useState(null);
       const [theme, setTheme] = useState('dark');
       const wsRef = useRef(null);
 
-      // Theme toggle switcher
       const toggleTheme = () => {
         const nextTheme = theme === 'dark' ? 'light' : 'dark';
         setTheme(nextTheme);
@@ -852,7 +976,6 @@
         setTokenState(null);
       };
 
-      // WebSocket Ingestion Pipeline Binding
       useEffect(() => {
         if (!token) return;
         
