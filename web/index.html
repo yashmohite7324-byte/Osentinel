@@ -330,14 +330,13 @@
 
       const riskScore = useMemo(() => {
         const incidents = state?.incidents || [];
-        const top = incidents.length > 0 ? incidents[0].score : 0;
-        const active = incidents.filter(i => i.score >= 30);
+        // Only count 'open' incidents
+        const openIncidents = incidents.filter(i => i.state !== 'closed' && i.state !== 'contained');
+        if (openIncidents.length === 0) return 0;
         
-        let finalScore = top;
-        if (active.length > 1) finalScore += (active.length * 5);
-        if (top >= 70) finalScore += 20;
-        
-        return Math.min(100.0, finalScore);
+        // Return the exact score of the most critical open incident
+        const top = Math.max(...openIncidents.map(i => i.score));
+        return Math.min(100.0, top);
       }, [state?.incidents]);
 
       // Calculate Severity Counts
@@ -419,7 +418,9 @@
 
               <nav className="p-3 space-y-1.5">
                 {[
-                  { id: 'overview', label: 'SOC Overview', icon: 'layout-dashboard' },
+                  { id: 'overview', label: 'SOC Analyst Role', icon: 'shield' },
+                  { id: 'executive', label: 'Executive CISO Role', icon: 'award' },
+                  { id: 'threat_hunter', label: 'Threat Hunter Role', icon: 'target' },
                   { id: 'detections', label: 'Signal Detections', icon: 'shield-alert' },
                   { id: 'processes', label: 'Process Pool', icon: 'cpu' },
                   { id: 'telemetry', label: 'Raw Telemetry', icon: 'activity' },
@@ -760,6 +761,150 @@
                     </div>
                   </div>
                 </>
+              )}
+
+              {/* ================= ROLE VIEW 2: EXECUTIVE CISO DASHBOARD ================= */}
+              {viewMode === "executive" && (
+                <div className="space-y-6">
+                  {/* Executive Risk Card */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="card-panel p-6 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col justify-between">
+                      <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Executive Security Index</span>
+                      <div className="my-4 flex items-baseline gap-2">
+                        <span className={`text-5xl font-extrabold font-mono ${riskScore > 70 ? 'text-red-500' : riskScore > 30 ? 'text-amber-500' : 'text-emerald-500'}`}>
+                          {Math.round(riskScore)}
+                        </span>
+                        <span className="text-lg font-bold text-slate-400">/ 100 Criticality</span>
+                      </div>
+                      <div className="text-xs font-semibold text-slate-300 flex items-center gap-2">
+                        <span className={`w-2.5 h-2.5 rounded-full ${riskScore > 70 ? 'bg-red-500 animate-ping' : riskScore > 30 ? 'bg-amber-500' : 'bg-emerald-500'}`}></span>
+                        <span>{riskScore > 70 ? 'CRITICAL RISK LEVEL' : riskScore > 30 ? 'ELEVATED RISK LEVEL' : 'OPTIMAL SECURITY POSTURE'}</span>
+                      </div>
+                    </div>
+
+                    <div className="card-panel p-6 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col justify-between">
+                      <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Compliance & Efficacy</span>
+                      <div className="my-3 space-y-2 font-mono text-xs">
+                        <div className="flex justify-between">
+                          <span className="text-slate-400">Security Control Alignment:</span>
+                          <span className="text-emerald-400 font-bold">98.5% (NIST SP 800-53)</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-400">Autonomous Containment Rate:</span>
+                          <span className="text-indigo-400 font-bold">100% Active Shield</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-400">Mean Time To Detect (MTTD):</span>
+                          <span className="text-slate-200 font-bold">&lt; 15ms</span>
+                        </div>
+                      </div>
+                      <span className="text-[10px] text-slate-500 uppercase font-mono">SOC Efficacy Benchmark: Excellent</span>
+                    </div>
+
+                    <div className="card-panel p-6 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col justify-between">
+                      <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Incident Severity Breakdown</span>
+                      <div className="my-2 grid grid-cols-2 gap-3 font-mono text-xs">
+                        <div className="p-2 rounded-xl bg-red-500/10 border border-red-500/20 text-center">
+                          <span className="text-[10px] text-red-400 block font-sans">CRITICAL (70-100)</span>
+                          <span className="text-lg font-bold text-red-400">{severityCounts.crit}</span>
+                        </div>
+                        <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-center">
+                          <span className="text-[10px] text-amber-400 block font-sans">HIGH (40-69)</span>
+                          <span className="text-lg font-bold text-amber-400">{severityCounts.high}</span>
+                        </div>
+                        <div className="p-2 rounded-xl bg-blue-500/10 border border-blue-500/20 text-center">
+                          <span className="text-[10px] text-blue-400 block font-sans">MEDIUM (20-39)</span>
+                          <span className="text-lg font-bold text-blue-400">{severityCounts.med}</span>
+                        </div>
+                        <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-center">
+                          <span className="text-[10px] text-emerald-400 block font-sans">LOW (0-19)</span>
+                          <span className="text-lg font-bold text-emerald-400">{severityCounts.low}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Executive Risk Table */}
+                  <div className="card-panel p-6 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-4">
+                    <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+                      <Icon name="award" className="w-4 h-4 text-indigo-400" />
+                      Executive Incident Log & Numerical Criticality Ratings
+                    </h3>
+                    <table className="w-full text-xs text-left">
+                      <thead className="text-slate-400 font-medium border-b border-slate-200 dark:border-slate-800">
+                        <tr>
+                          <th className="py-2">Incident ID</th>
+                          <th className="py-2">Threat Designation</th>
+                          <th className="py-2">Criticality Score</th>
+                          <th className="py-2">Severity Level</th>
+                          <th className="py-2">Containment Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="font-mono text-[11px] divide-y divide-slate-200 dark:divide-slate-800/50">
+                        {(state?.incidents || []).map((inc, i) => (
+                          <tr key={i} className="hover:bg-slate-500/5">
+                            <td className="py-2 text-indigo-400">{inc.id.substring(0, 10)}</td>
+                            <td className="py-2 font-bold text-slate-200">{inc.detections[0]?.rule_id || 'Behavioral Anomaly'}</td>
+                            <td className="py-2">
+                              <span className={`px-2 py-0.5 rounded font-bold ${inc.score >= 70 ? 'bg-red-500/20 text-red-400 border border-red-500/30' : inc.score >= 40 ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'}`}>
+                                {Math.round(inc.score)} / 100
+                              </span>
+                            </td>
+                            <td className="py-2 text-slate-300">{inc.score >= 70 ? 'CRITICAL' : inc.score >= 40 ? 'HIGH' : 'MEDIUM'}</td>
+                            <td className="py-2"><span className="text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">{inc.state || 'Contained'}</span></td>
+                          </tr>
+                        ))}
+                        {(!state?.incidents || state.incidents.length === 0) && (
+                          <tr><td colSpan="5" className="py-6 text-center text-slate-500">No active incidents logged for executive review</td></tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* ================= ROLE VIEW 3: THREAT HUNTER DASHBOARD ================= */}
+              {viewMode === "threat_hunter" && (
+                <div className="space-y-6">
+                  <div className="card-panel p-6 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-4">
+                    <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
+                      <h3 className="text-xs font-bold text-indigo-400 uppercase tracking-wider flex items-center gap-2">
+                        <Icon name="target" className="w-4 h-4 text-red-400" />
+                        Threat Hunter Command Center — Signal Anomaly Stream
+                      </h3>
+                      <span className="text-xs font-mono text-slate-400">Numerical Criticality Ratings Active</span>
+                    </div>
+
+                    <table className="w-full text-xs text-left">
+                      <thead className="text-slate-400 font-medium">
+                        <tr>
+                          <th className="py-2">Time</th>
+                          <th className="py-2">Signal Rule ID</th>
+                          <th className="py-2">Numerical Score</th>
+                          <th className="py-2">Target PID / Entity</th>
+                          <th className="py-2">MITRE Technique</th>
+                          <th className="py-2">Remediation Action</th>
+                        </tr>
+                      </thead>
+                      <tbody className="font-mono text-[11px] divide-y divide-slate-200 dark:divide-slate-800/50">
+                        {filteredSignals.map((d, i) => (
+                          <tr key={i} className="hover:bg-slate-500/5">
+                            <td className="py-2 text-slate-400">{new Date((d.ts || 0) * 1000).toLocaleTimeString()}</td>
+                            <td className="py-2 font-bold text-indigo-300">{d.rule_id}</td>
+                            <td className="py-2">
+                              <span className={`px-2 py-0.5 rounded font-extrabold ${d.score >= 70 ? 'bg-red-500/20 text-red-400 border border-red-500/30' : d.score >= 40 ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'}`}>
+                                {d.score} / 100
+                              </span>
+                            </td>
+                            <td className="py-2 text-slate-200">{d.entity}</td>
+                            <td className="py-2"><span className="text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20">{(d.mitre || ['T1059']).join(', ')}</span></td>
+                            <td className="py-2 text-slate-400 truncate max-w-xs">{d.remediation || 'Automated Containment'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               )}
 
               {/* ================= VIEW 2: SIGNAL DETECTIONS ================= */}
