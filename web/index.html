@@ -1205,37 +1205,83 @@
         let wsProto = window.location.protocol === "https:" ? "wss:" : "ws:";
         const ws = new WebSocket(`${wsProto}//${window.location.host}/ws`);
         
+        // Incoming message buffers
+        let pendingSnapshot = null;
+        let pendingMetrics = null;
+        let pendingEvents = [];
+        let pendingDetections = [];
+        let pendingIncidents = [];
+        let pendingActions = [];
+
         ws.onopen = () => ws.send(JSON.stringify({ type: "auth", token }));
         ws.onmessage = (e) => {
           try {
             const msg = JSON.parse(e.data);
             if (msg.type === "snapshot") {
-              setState(prev => ({ ...prev, ...msg.data }));
+              pendingSnapshot = msg.data;
             } else if (msg.type === "metrics") {
-              setState(prev => ({
-                ...prev,
-                metrics: msg.data,
-                history: [...(prev?.history || []), msg.data].slice(-120)
-              }));
+              pendingMetrics = msg.data;
             } else if (msg.type === "events") {
-              setState(prev => ({ ...prev, events: [...msg.data, ...(prev?.events || [])].slice(0, 120) }));
+              pendingEvents = [...(msg.data || []), ...pendingEvents].slice(0, 100);
             } else if (msg.type === "detections") {
-              setState(prev => ({ ...prev, detections: [...msg.data, ...(prev?.detections || [])].slice(0, 80) }));
+              pendingDetections = [...(msg.data || []), ...pendingDetections].slice(0, 50);
             } else if (msg.type === "incident") {
-              setState(prev => {
-                const incs = [...(prev?.incidents || [])];
-                const idx = incs.findIndex(i => i.id === msg.data.id);
-                if(idx >= 0) incs[idx] = msg.data;
-                else incs.unshift(msg.data);
-                return { ...prev, incidents: incs };
-              });
+              pendingIncidents.unshift(msg.data);
             } else if (msg.type === "action") {
-              setState(prev => ({ ...prev, actions: [msg.data, ...(prev?.actions || [])].slice(0, 30) }));
+              pendingActions.unshift(msg.data);
             }
           } catch(err) {}
         };
         ws.onclose = () => console.log("WebSocket connection closed");
         wsRef.current = ws;
+
+        // Flush pending telemetry buffer to React state smoothly every 500ms
+        const flushTimer = setInterval(() => {
+          setState(prev => {
+            let updated = { ...prev };
+            let hasChanges = false;
+
+            if (pendingSnapshot) {
+              updated = { ...updated, ...pendingSnapshot };
+              pendingSnapshot = null;
+              hasChanges = true;
+            }
+            if (pendingMetrics) {
+              updated.metrics = pendingMetrics;
+              updated.history = [...(updated.history || []), pendingMetrics].slice(-60);
+              pendingMetrics = null;
+              hasChanges = true;
+            }
+            if (pendingEvents.length > 0) {
+              updated.events = [...pendingEvents, ...(updated.events || [])].slice(0, 100);
+              pendingEvents = [];
+              hasChanges = true;
+            }
+            if (pendingDetections.length > 0) {
+              updated.detections = [...pendingDetections, ...(updated.detections || [])].slice(0, 50);
+              pendingDetections = [];
+              hasChanges = true;
+            }
+            if (pendingIncidents.length > 0) {
+              const incs = [...(updated.incidents || [])];
+              pendingIncidents.forEach(item => {
+                const idx = incs.findIndex(i => i.id === item.id);
+                if (idx >= 0) incs[idx] = item;
+                else incs.unshift(item);
+              });
+              updated.incidents = incs;
+              pendingIncidents = [];
+              hasChanges = true;
+            }
+            if (pendingActions.length > 0) {
+              updated.actions = [...pendingActions, ...(updated.actions || [])].slice(0, 30);
+              pendingActions = [];
+              hasChanges = true;
+            }
+
+            return hasChanges ? updated : prev;
+          });
+        }, 500);
 
         const poll = setInterval(async () => {
            try { await apiFetch("/api/health"); } catch(e) {}
@@ -1243,6 +1289,7 @@
 
         return () => {
           ws.close();
+          clearInterval(flushTimer);
           clearInterval(poll);
         };
       }, [token]);
