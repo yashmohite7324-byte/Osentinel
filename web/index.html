@@ -763,13 +763,16 @@
         updateModeBadge(state.status.response.mode);
       }
 
-      // Incidents & Threat Posture calculations
+      // Real-Time Threat Posture Calculations (Dynamic 10s Window for Telemetry Signals)
       const incidents = state.incidents || [];
-      const openIncidents = incidents.filter(i => i.state !== 'closed' && i.state !== 'contained');
-      const latestDetScore = (state.detections && state.detections.length > 0) ? Math.max(...state.detections.map(d => d.score || 0)) : 0;
-      const openIncScore = openIncidents.length > 0 ? Math.max(...openIncidents.map(i => i.score || 0)) : 0;
-      const postureRisk = state.posture?.risk || 0;
-      const maxScore = Math.max(openIncScore, latestDetScore, postureRisk);
+      const nowTs = Date.now() / 1000;
+      const recentIncidents = incidents.filter(i => (i.state !== 'closed' && i.state !== 'contained') && (nowTs - (i.updated_ts || 0) < 120));
+      
+      const recentDetections = (state.detections || []).filter(d => (nowTs - (d.timestamp || 0) < 15));
+      const latestDetScore = recentDetections.length > 0 ? Math.max(...recentDetections.map(d => d.score || 0)) : 0;
+      const openIncScore = recentIncidents.length > 0 ? Math.max(...recentIncidents.map(i => i.score || 0)) : 0;
+      
+      const maxScore = Math.max(openIncScore, latestDetScore);
 
       // Severity breakdown (4 Distinct Severity Bands)
       let critCount = 0, highCount = 0, medCount = 0, lowCount = 0;
