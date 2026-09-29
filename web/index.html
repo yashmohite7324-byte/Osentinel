@@ -289,6 +289,53 @@
             </div>
           </div>
 
+          <!-- Real-Time Host System Metrics Row -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="card-panel p-4 rounded-2xl flex flex-col justify-between">
+              <div class="flex justify-between items-center mb-1">
+                <span class="text-xs text-slate-400 font-semibold uppercase">Memory Allocation</span>
+                <span id="metric-mem-status" class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300">Normal</span>
+              </div>
+              <div class="flex items-baseline justify-between mt-1">
+                <span id="metric-mem-val" class="text-2xl font-extrabold font-mono text-slate-100">0.0%</span>
+                <span class="text-[10px] text-emerald-400 font-mono">▲ Live RAM</span>
+              </div>
+            </div>
+
+            <div class="card-panel p-4 rounded-2xl flex flex-col justify-between">
+              <div class="flex justify-between items-center mb-1">
+                <span class="text-xs text-slate-400 font-semibold uppercase">CPU Core Load</span>
+                <span id="metric-cpu-status" class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300">Normal</span>
+              </div>
+              <div class="flex items-baseline justify-between mt-1">
+                <span id="metric-cpu-val" class="text-2xl font-extrabold font-mono text-slate-100">0.0%</span>
+                <span class="text-[10px] text-emerald-400 font-mono">▲ Live CPU</span>
+              </div>
+            </div>
+
+            <div class="card-panel p-4 rounded-2xl flex flex-col justify-between">
+              <div class="flex justify-between items-center mb-1">
+                <span class="text-xs text-slate-400 font-semibold uppercase">Active Process Pool</span>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300">Monitored</span>
+              </div>
+              <div class="flex items-baseline justify-between mt-1">
+                <span id="metric-procs-val" class="text-2xl font-extrabold font-mono text-slate-100">0</span>
+                <span class="text-[10px] text-indigo-400 font-mono">Processes</span>
+              </div>
+            </div>
+
+            <div class="card-panel p-4 rounded-2xl flex flex-col justify-between">
+              <div class="flex justify-between items-center mb-1">
+                <span class="text-xs text-slate-400 font-semibold uppercase">Kernel Switches</span>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300">Optimal</span>
+              </div>
+              <div class="flex items-baseline justify-between mt-1">
+                <span id="metric-ctx-val" class="text-2xl font-extrabold font-mono text-slate-100">0/s</span>
+                <span class="text-[10px] text-blue-400 font-mono">Context/s</span>
+              </div>
+            </div>
+          </div>
+
           <!-- Response Action Log -->
           <div class="card-panel p-6 rounded-2xl space-y-4">
             <h3 class="text-xs font-bold text-indigo-400 uppercase tracking-wider flex items-center gap-2">
@@ -630,6 +677,23 @@
         }).join("");
       }
 
+      // Host System Metrics Updates
+      if (state.metrics) {
+        const mem = state.metrics.mem_percent || 0;
+        const cpu = state.metrics.cpu_percent || 0;
+        const procs = state.metrics.process_count || 0;
+        const ctx = state.metrics.ctx_switches_per_s || 0;
+
+        document.getElementById("metric-mem-val").textContent = `${mem.toFixed(1)}%`;
+        document.getElementById("metric-mem-status").textContent = mem > 85 ? "High" : "Normal";
+        
+        document.getElementById("metric-cpu-val").textContent = `${cpu.toFixed(1)}%`;
+        document.getElementById("metric-cpu-status").textContent = cpu > 80 ? "Elevated" : "Normal";
+        
+        document.getElementById("metric-procs-val").textContent = procs;
+        document.getElementById("metric-ctx-val").textContent = `${Math.round(ctx)}/s`;
+      }
+
       // Response Log Rendering
       const logBody = document.getElementById("response-log-tbody");
       if (!state.actions || state.actions.length === 0) {
@@ -644,6 +708,58 @@
             <td class="py-2 text-slate-400">${act.detail}</td>
           </tr>
         `).join("");
+      }
+
+      // Signal Detections Rendering
+      const signalsBody = document.getElementById("signals-tbody");
+      if (signalsBody) {
+        if (!state.detections || state.detections.length === 0) {
+          signalsBody.innerHTML = '<tr><td colSpan="4" class="py-6 text-center text-slate-500">No detection signals recorded.</td></tr>';
+        } else {
+          signalsBody.innerHTML = state.detections.slice(0, 30).map(d => `
+            <tr class="hover:bg-slate-500/5">
+              <td class="py-2 text-slate-400">${new Date((d.ts || 0) * 1000).toLocaleTimeString()}</td>
+              <td class="py-2 font-bold text-indigo-400">${d.rule_id || 'Rule Alert'}</td>
+              <td class="py-2 font-mono font-bold ${d.score >= 70 ? 'text-red-400' : d.score >= 50 ? 'text-amber-400' : 'text-emerald-400'}">${Math.round(d.score || 0)} / 100</td>
+              <td class="py-2 font-mono text-slate-300">${d.entity || '-'}</td>
+            </tr>
+          `).join("");
+        }
+      }
+
+      // Process Directory & Command Line Rendering
+      const procsBody = document.getElementById("processes-tbody");
+      if (procsBody) {
+        if (!state.processes || state.processes.length === 0) {
+          procsBody.innerHTML = '<tr><td colSpan="5" class="py-6 text-center text-slate-500">No processes monitored.</td></tr>';
+        } else {
+          procsBody.innerHTML = state.processes.slice(0, 30).map(p => `
+            <tr class="hover:bg-slate-500/5">
+              <td class="py-2 text-indigo-400 font-mono">${p.pid}</td>
+              <td class="py-2 font-bold text-slate-200">${p.name || '-'}</td>
+              <td class="py-2 text-slate-400">${p.user || '-'}</td>
+              <td class="py-2 font-mono text-amber-400">${(p.cpu || 0).toFixed(1)}%</td>
+              <td class="py-2 font-mono text-slate-300 truncate max-w-md">${p.cmdline || p.name || '-'}</td>
+            </tr>
+          `).join("");
+        }
+      }
+
+      // Raw Ingested Telemetry Events Rendering
+      const eventsBody = document.getElementById("events-tbody");
+      if (eventsBody) {
+        if (!state.events || state.events.length === 0) {
+          eventsBody.innerHTML = '<tr><td colSpan="4" class="py-6 text-center text-slate-500">No telemetry events ingested yet.</td></tr>';
+        } else {
+          eventsBody.innerHTML = state.events.slice(0, 30).map(e => `
+            <tr class="hover:bg-slate-500/5">
+              <td class="py-2 text-slate-400">${new Date((e.ts || 0) * 1000).toLocaleTimeString()}</td>
+              <td class="py-2 text-slate-300">${e.category || '-'}</td>
+              <td class="py-2 text-indigo-400 font-semibold">${e.action || '-'}</td>
+              <td class="py-2 font-mono text-slate-400 truncate max-w-xs">${e.entity || '-'}</td>
+            </tr>
+          `).join("");
+        }
       }
     }
 
