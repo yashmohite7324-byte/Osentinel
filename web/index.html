@@ -763,18 +763,21 @@
         updateModeBadge(state.status.response.mode);
       }
 
-      // Incidents calculations
+      // Incidents & Threat Posture calculations
       const incidents = state.incidents || [];
       const openIncidents = incidents.filter(i => i.state !== 'closed' && i.state !== 'contained');
-      const maxScore = openIncidents.length > 0 ? Math.max(...openIncidents.map(i => i.score || 0)) : 0;
+      const latestDetScore = (state.detections && state.detections.length > 0) ? Math.max(...state.detections.map(d => d.score || 0)) : 0;
+      const openIncScore = openIncidents.length > 0 ? Math.max(...openIncidents.map(i => i.score || 0)) : 0;
+      const postureRisk = state.posture?.risk || 0;
+      const maxScore = Math.max(openIncScore, latestDetScore, postureRisk);
 
-      // Severity breakdown
+      // Severity breakdown (4 Distinct Severity Bands)
       let critCount = 0, highCount = 0, medCount = 0, lowCount = 0;
       incidents.forEach(i => {
         const sc = i.score || 0;
-        if (sc >= 70) critCount++;
-        else if (sc >= 50) highCount++;
-        else if (sc >= 20) medCount++;
+        if (sc >= 80) critCount++;
+        else if (sc >= 65) highCount++;
+        else if (sc >= 40) medCount++;
         else lowCount++;
       });
       const totInc = incidents.length || 1;
@@ -795,7 +798,7 @@
       document.getElementById("exec-cnt-med").textContent = medCount;
       document.getElementById("exec-cnt-low").textContent = lowCount;
 
-      // Update Gauge
+      // Update Gauge & Executive Risk Classification
       const gaugeArc = document.getElementById("gauge-path");
       const gaugeScoreNum = document.getElementById("gauge-score-num");
       const gaugeStatusLabel = document.getElementById("gauge-status-label");
@@ -807,15 +810,23 @@
       const execRiskStatus = document.getElementById("exec-risk-status");
       execRiskVal.textContent = Math.round(maxScore);
 
-      if (maxScore >= 70) {
+      if (maxScore >= 80) {
         gaugeScoreNum.className = "text-4xl font-extrabold tracking-tight text-red-500";
         gaugeStatusLabel.className = "mt-3 text-xs font-extrabold uppercase tracking-widest text-red-500";
-        gaugeStatusLabel.textContent = "CRITICAL THREAT";
+        gaugeStatusLabel.textContent = "CRITICAL THREAT (SEVERE)";
 
         execRiskVal.className = "text-5xl font-extrabold font-mono text-red-500";
         execRiskStatus.className = "text-xs font-semibold text-red-400 flex items-center gap-2";
         execRiskStatus.textContent = "CRITICAL RISK LEVEL";
-      } else if (maxScore >= 50) {
+      } else if (maxScore >= 65) {
+        gaugeScoreNum.className = "text-4xl font-extrabold tracking-tight text-orange-500";
+        gaugeStatusLabel.className = "mt-3 text-xs font-extrabold uppercase tracking-widest text-orange-500";
+        gaugeStatusLabel.textContent = "HIGH THREAT";
+
+        execRiskVal.className = "text-5xl font-extrabold font-mono text-orange-500";
+        execRiskStatus.className = "text-xs font-semibold text-orange-400 flex items-center gap-2";
+        execRiskStatus.textContent = "HIGH RISK LEVEL";
+      } else if (maxScore >= 40) {
         gaugeScoreNum.className = "text-4xl font-extrabold tracking-tight text-amber-500";
         gaugeStatusLabel.className = "mt-3 text-xs font-extrabold uppercase tracking-widest text-amber-500";
         gaugeStatusLabel.textContent = "ELEVATED RISK";
@@ -843,19 +854,23 @@
         queueContainer.innerHTML = '<div class="text-center py-10 text-xs text-slate-400">No active threat incidents logged. System safe.</div>';
       } else {
         queueContainer.innerHTML = openIncidents.map(inc => {
-          const isCrit = inc.score >= 70;
-          const isHigh = inc.score >= 50;
+          const isCrit = inc.score >= 80;
+          const isHigh = inc.score >= 65;
+          const isMed = inc.score >= 40;
           const badgeClass = isCrit 
             ? "bg-red-500/20 text-red-500 border-red-500/30" 
             : isHigh 
-              ? "bg-amber-500/20 text-amber-500 border-amber-500/30" 
-              : "bg-emerald-500/20 text-emerald-500 border-emerald-500/30";
+              ? "bg-orange-500/20 text-orange-500 border-orange-500/30" 
+              : isMed
+                ? "bg-amber-500/20 text-amber-500 border-amber-500/30"
+                : "bg-emerald-500/20 text-emerald-500 border-emerald-500/30";
+          const label = isCrit ? 'CRIT' : isHigh ? 'HIGH' : isMed ? 'MED' : 'LOW';
 
           return `
             <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 input-field flex items-start justify-between gap-3">
               <div class="flex items-start gap-3">
                 <div class="px-2.5 py-1.5 rounded-xl text-center border ${badgeClass}">
-                  <span class="text-[9px] font-black uppercase tracking-wider block">${isCrit ? 'CRIT' : isHigh ? 'HIGH' : 'LOW'}</span>
+                  <span class="text-[9px] font-black uppercase tracking-wider block">${label}</span>
                   <span class="text-sm font-extrabold font-mono">${Math.round(inc.score)}</span>
                 </div>
                 <div>
@@ -877,15 +892,21 @@
         if (incidents.length === 0) {
           execTbody.innerHTML = '<tr><td colSpan="5" class="py-6 text-center text-slate-500">No active incidents logged for executive review.</td></tr>';
         } else {
-          execTbody.innerHTML = incidents.slice(0, 15).map(inc => `
-            <tr class="hover:bg-slate-500/5">
-              <td class="py-2 text-indigo-400 font-mono">${inc.id.substring(0, 10)}</td>
-              <td class="py-2 font-bold text-slate-200">${inc.detections[0]?.rule_id || 'Behavioral Anomaly'}</td>
-              <td class="py-2 font-mono font-bold ${inc.score >= 70 ? 'text-red-400' : inc.score >= 50 ? 'text-amber-400' : 'text-emerald-400'}">${Math.round(inc.score)} / 100</td>
-              <td class="py-2 text-slate-300 uppercase font-semibold text-[10px]">${inc.score >= 70 ? 'CRITICAL' : inc.score >= 50 ? 'HIGH' : 'LOW'}</td>
-              <td class="py-2"><span class="text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 text-[10px]">${inc.state || 'Contained'}</span></td>
-            </tr>
-          `).join("");
+          execTbody.innerHTML = incidents.slice(0, 15).map(inc => {
+            const sc = inc.score || 0;
+            const scColor = sc >= 80 ? 'text-red-400' : sc >= 65 ? 'text-orange-400' : sc >= 40 ? 'text-amber-400' : 'text-emerald-400';
+            const scLabel = sc >= 80 ? 'CRITICAL' : sc >= 65 ? 'HIGH' : sc >= 40 ? 'MEDIUM' : 'LOW';
+
+            return `
+              <tr class="hover:bg-slate-500/5">
+                <td class="py-2 text-indigo-400 font-mono">${inc.id.substring(0, 10)}</td>
+                <td class="py-2 font-bold text-slate-200">${inc.detections[0]?.rule_id || 'Behavioral Anomaly'}</td>
+                <td class="py-2 font-mono font-bold ${scColor}">${Math.round(sc)} / 100</td>
+                <td class="py-2 text-slate-300 uppercase font-semibold text-[10px]">${scLabel}</td>
+                <td class="py-2"><span class="text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 text-[10px]">${inc.state || 'Contained'}</span></td>
+              </tr>
+            `;
+          }).join("");
         }
       }
 
@@ -896,16 +917,21 @@
         if (dets.length === 0) {
           hunterTbody.innerHTML = '<tr><td colSpan="6" class="py-6 text-center text-slate-500">No telemetry anomaly signals logged.</td></tr>';
         } else {
-          hunterTbody.innerHTML = dets.slice(0, 20).map(d => `
-            <tr class="hover:bg-slate-500/5">
-              <td class="py-2 text-slate-400">${new Date((d.ts || 0) * 1000).toLocaleTimeString()}</td>
-              <td class="py-2 font-bold text-indigo-300">${d.rule_id || 'Rule Trigger'}</td>
-              <td class="py-2 font-mono font-bold ${d.score >= 70 ? 'text-red-400' : d.score >= 50 ? 'text-amber-400' : 'text-emerald-400'}">${Math.round(d.score || 0)} / 100</td>
-              <td class="py-2 font-mono text-slate-200">${d.entity || '-'}</td>
-              <td class="py-2"><span class="text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20 text-[10px]">${(d.mitre || ['T1059']).join(', ')}</span></td>
-              <td class="py-2 text-slate-400 truncate max-w-xs text-[10px]">${d.remediation || 'Automated Containment'}</td>
-            </tr>
-          `).join("");
+          hunterTbody.innerHTML = dets.slice(0, 20).map(d => {
+            const sc = d.score || 0;
+            const scColor = sc >= 80 ? 'text-red-400' : sc >= 65 ? 'text-orange-400' : sc >= 40 ? 'text-amber-400' : 'text-emerald-400';
+
+            return `
+              <tr class="hover:bg-slate-500/5">
+                <td class="py-2 text-slate-400">${new Date((d.ts || 0) * 1000).toLocaleTimeString()}</td>
+                <td class="py-2 font-bold text-indigo-300">${d.rule_id || 'Rule Trigger'}</td>
+                <td class="py-2 font-mono font-bold ${scColor}">${Math.round(sc)} / 100</td>
+                <td class="py-2 font-mono text-slate-200">${d.entity || '-'}</td>
+                <td class="py-2"><span class="text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20 text-[10px]">${(d.mitre || ['T1059']).join(', ')}</span></td>
+                <td class="py-2 text-slate-400 truncate max-w-xs text-[10px]">${d.remediation || 'Automated Containment'}</td>
+              </tr>
+            `;
+          }).join("");
         }
       }
 
