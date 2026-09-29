@@ -55,6 +55,10 @@ def create_app(cfg: Config | None = None) -> FastAPI:
         access_token = create_access_token(data={"sub": user["username"]})
         return {"access_token": access_token, "token_type": "bearer"}
 
+    @app.get("/api/health")
+    def health():
+        return {"status": "ok", "agent": "OSentinel EDR"}
+
     @app.get("/api/snapshot")
     def snapshot(current_user: dict = Depends(get_current_user)):
         return engine.snapshot()
@@ -66,6 +70,16 @@ def create_app(cfg: Config | None = None) -> FastAPI:
     @app.get("/api/status")
     def status(current_user: dict = Depends(get_current_user)):
         return engine.status()
+
+    @app.post("/api/config/mode")
+    def set_mode(current_user: dict = Depends(get_current_user)):
+        # Toggle dry_run status dynamically
+        engine.responder.dry_run = not engine.responder.dry_run
+        engine.cfg.dry_run = engine.responder.dry_run
+        mode_name = "enforcing" if not engine.responder.dry_run else "dry_run"
+        # Broadcast mode change over WebSocket
+        engine._broadcast({"type": "snapshot", "data": engine.snapshot()})
+        return {"status": "ok", "mode": mode_name, "dry_run": engine.responder.dry_run}
 
     @app.get("/api/events")
     def events(limit: int = 200, category: str | None = None, current_user: dict = Depends(get_current_user)):

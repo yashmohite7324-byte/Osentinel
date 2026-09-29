@@ -140,9 +140,6 @@ class Responder:
 
             import subprocess
             subprocess.run(cmd, shell=True, capture_output=True, timeout=5)
-            # Visual desktop alert
-            popup = f'powershell.exe -WindowStyle Hidden -Command "Add-Type -AssemblyName PresentationFramework; [System.Windows.MessageBox]::Show(\'{detail}\', \'OSentinel Active Tackle\', 0, 64)"'
-            subprocess.Popen(popup, shell=True)
             return self._record("tackle", incident.entity, True, detail)
         except Exception as exc:
             return self._record("tackle", incident.entity, False, f"tackle failed: {exc}")
