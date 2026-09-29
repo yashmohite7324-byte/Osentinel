@@ -666,10 +666,21 @@
       }
     }
 
-    // High-Performance WebSocket Telemetry Connection
+    let activeWs = null;
+    let wsInterval = null;
+
+    // High-Performance WebSocket Telemetry Connection with Reconnect Safety
     function connectWebSocket(token) {
+      if (activeWs) {
+        try { activeWs.close(); } catch(e) {}
+      }
+      if (wsInterval) {
+        clearInterval(wsInterval);
+      }
+
       const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
       const ws = new WebSocket(`${proto}//${window.location.host}/ws`);
+      activeWs = ws;
 
       let pendingSnapshot = null;
       let pendingMetrics = null;
@@ -678,7 +689,9 @@
       let pendingIncidents = [];
       let pendingActions = [];
 
-      ws.onopen = () => ws.send(JSON.stringify({ type: "auth", token }));
+      ws.onopen = () => {
+        ws.send(JSON.stringify({ type: "auth", token }));
+      };
 
       ws.onmessage = (e) => {
         try {
@@ -692,8 +705,19 @@
         } catch(err) {}
       };
 
+      ws.onclose = () => {
+        if (wsInterval) clearInterval(wsInterval);
+        setTimeout(() => {
+          if (getToken()) connectWebSocket(getToken());
+        }, 2000);
+      };
+
+      ws.onerror = () => {
+        try { ws.close(); } catch(e) {}
+      };
+
       // Smooth 500ms Throttle Flush
-      setInterval(() => {
+      wsInterval = setInterval(() => {
         if (pendingSnapshot) {
           state = { ...state, ...pendingSnapshot };
           pendingSnapshot = null;
