@@ -5,12 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>OSentinel — Enterprise SOC Command Console</title>
   
-  <!-- React & ReactDOM -->
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <!-- Babel -->
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <!-- Tailwind CSS -->
+  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -30,83 +25,39 @@
       }
     }
   </script>
-  <!-- Lucide Icons -->
-  <script src="https://unpkg.com/lucide@latest"></script>
+  
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
     body {
       font-family: 'Inter', system-ui, sans-serif;
       transition: background-color 0.2s ease, color 0.2s ease;
     }
-    
-    .font-mono {
-      font-family: 'JetBrains Mono', monospace;
-    }
+    .dark body { background-color: #080c14; color: #cbd5e1; }
+    body { background-color: #f8fafc; color: #0f172a; }
 
-    .dark body {
-      background-color: #080c14;
-      color: #cbd5e1;
-    }
+    .dark .card-panel { background: #0f172a; border: 1px solid #1e293b; box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.3); }
+    .card-panel { background: #ffffff; border: 1px solid #cbd5e1; box-shadow: 0 4px 15px -2px rgba(0, 0, 0, 0.08); }
 
-    body {
-      background-color: #f8fafc;
-      color: #0f172a;
-    }
-
-    .dark .card-panel {
-      background: #0f172a;
-      border: 1px solid #1e293b;
-      box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.3);
-    }
-
-    .card-panel {
-      background: #ffffff;
-      border: 1px solid #cbd5e1;
-      box-shadow: 0 4px 15px -2px rgba(0, 0, 0, 0.08);
-    }
-
-    .dark .input-field {
-      background: #090d16;
-      border: 1px solid #1e293b;
-      color: #f8fafc;
-    }
-
-    .input-field {
-      background: #f1f5f9;
-      border: 1px solid #cbd5e1;
-      color: #0f172a;
-    }
+    .dark .input-field { background: #090d16; border: 1px solid #1e293b; color: #f8fafc; }
+    .input-field { background: #f1f5f9; border: 1px solid #cbd5e1; color: #0f172a; }
 
     /* Light Theme High Contrast Overrides */
-    html:not(.dark) .text-slate-100, 
-    html:not(.dark) .text-slate-200, 
-    html:not(.dark) .text-slate-300 {
-      color: #0f172a !important;
-    }
-    html:not(.dark) .text-slate-400 {
-      color: #334155 !important;
-    }
-    html:not(.dark) .text-slate-500 {
-      color: #475569 !important;
-    }
-    html:not(.dark) .border-slate-800 {
-      border-color: #cbd5e1 !important;
-    }
-    html:not(.dark) .bg-slate-900\/60, 
-    html:not(.dark) .bg-slate-800 {
-      background-color: #e2e8f0 !important;
-    }
+    html:not(.dark) .text-slate-100, html:not(.dark) .text-slate-200, html:not(.dark) .text-slate-300 { color: #0f172a !important; }
+    html:not(.dark) .text-slate-400 { color: #334155 !important; }
+    html:not(.dark) .text-slate-500 { color: #475569 !important; }
+    html:not(.dark) .border-slate-800 { border-color: #cbd5e1 !important; }
+    html:not(.dark) .bg-slate-900\/60, html:not(.dark) .bg-slate-800 { background-color: #e2e8f0 !important; }
 
     .gauge-arc {
       stroke-width: 12;
       stroke-linecap: round;
       fill: none;
       stroke-dasharray: 283;
-      transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: stroke-dashoffset 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -117,1220 +68,587 @@
   </style>
 </head>
 <body class="h-screen overflow-hidden">
-  <div id="root" class="h-full"></div>
 
-  <script type="text/babel">
-    const { useState, useEffect, useRef, useMemo } = React;
+  <!-- ================= AUTH CONTAINER (LOGIN) ================= -->
+  <div id="auth-screen" class="hidden flex h-screen w-full items-center justify-center relative p-4">
+    <div class="absolute top-6 left-6 flex items-center gap-3">
+       <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30 font-bold text-lg">
+         🛡️
+       </div>
+       <div class="flex flex-col">
+         <span class="text-xl font-bold tracking-tight">OSentinel</span>
+         <span class="text-xs text-indigo-500 font-mono tracking-widest uppercase font-semibold">SOC Command Suite</span>
+       </div>
+    </div>
+    
+    <div class="card-panel p-8 sm:p-10 rounded-2xl w-full max-w-md flex flex-col items-center z-10 relative">
+      <div class="w-14 h-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mb-4 text-2xl">
+        🔐
+      </div>
+      <h2 class="text-xl font-bold mb-1 text-center">Sign In to SOC Console</h2>
+      <p class="text-xs text-slate-500 mb-6 text-center">Authenticate to access live telemetry and threat prevention</p>
+      
+      <div id="login-error" class="hidden w-full bg-red-500/10 border border-red-500/20 text-red-500 p-3 rounded-xl text-xs mb-4"></div>
 
+      <form id="login-form" class="w-full flex flex-col gap-4">
+        <div>
+          <label class="text-xs font-semibold mb-1.5 block text-slate-400">Username / Operator ID</label>
+          <input id="input-user" type="text" value="asus f15" required class="input-field w-full rounded-xl py-2.5 px-4 text-sm font-mono focus:outline-none focus:border-indigo-500" />
+        </div>
+        <div>
+          <label class="text-xs font-semibold mb-1.5 block text-slate-400">Password / Access Token</label>
+          <input id="input-pass" type="password" value="admin" required class="input-field w-full rounded-xl py-2.5 px-4 text-sm font-mono focus:outline-none focus:border-indigo-500" />
+        </div>
+        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 rounded-xl shadow-lg shadow-indigo-600/30 transition-all text-xs uppercase tracking-wider mt-2">
+          Sign In to Dashboard
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= MAIN APP CONTAINER ================= -->
+  <div id="app-screen" class="hidden flex h-screen w-full overflow-hidden">
+    
+    <!-- Sidebar -->
+    <aside class="w-16 md:w-64 border-r border-slate-200 dark:border-slate-800 flex flex-col justify-between flex-shrink-0 card-panel z-20">
+      <div>
+        <div class="h-16 flex items-center px-4 border-b border-slate-200 dark:border-slate-800 gap-3">
+          <div class="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center text-white flex-shrink-0 shadow-lg shadow-indigo-600/30 font-bold">
+            🛡️
+          </div>
+          <div class="hidden md:flex flex-col">
+            <span class="font-bold text-sm tracking-tight">OSentinel</span>
+            <span class="text-[10px] text-indigo-500 font-mono tracking-wider font-semibold">ENTERPRISE SOC</span>
+          </div>
+        </div>
+
+        <nav class="p-3 space-y-1.5" id="nav-items">
+          <button data-view="overview" class="nav-btn active w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold bg-indigo-600 text-white shadow-md shadow-indigo-600/20">
+            <span>🛡️</span> <span class="hidden md:inline">SOC Analyst Role</span>
+          </button>
+          <button data-view="executive" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60">
+            <span>🏆</span> <span class="hidden md:inline">Executive CISO Role</span>
+          </button>
+          <button data-view="threat_hunter" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60">
+            <span>🎯</span> <span class="hidden md:inline">Threat Hunter Role</span>
+          </button>
+          <button data-view="detections" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60">
+            <span>🚨</span> <span class="hidden md:inline">Signal Detections</span>
+          </button>
+          <button data-view="processes" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60">
+            <span>⚙️</span> <span class="hidden md:inline">Process Pool</span>
+          </button>
+          <button data-view="telemetry" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60">
+            <span>📊</span> <span class="hidden md:inline">Raw Telemetry</span>
+          </button>
+          <button data-view="rules" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60">
+            <span>📜</span> <span class="hidden md:inline">YARA Signatures</span>
+          </button>
+          <button data-view="config" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60">
+            <span>🖥️</span> <span class="hidden md:inline">Agent Status</span>
+          </button>
+        </nav>
+      </div>
+
+      <div class="p-3 border-t border-slate-200 dark:border-slate-800 space-y-2">
+        <button id="btn-theme" class="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+          <span id="theme-icon">🌙</span> <span class="hidden md:inline font-medium" id="theme-label">Dark Theme</span>
+        </button>
+        <button id="btn-logout" class="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs text-red-500 hover:bg-red-500/10 transition-colors">
+          <span>🚪</span> <span class="hidden md:inline font-medium">Logout Session</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div class="flex-1 flex flex-col h-full overflow-hidden">
+      
+      <!-- Top Header -->
+      <header class="h-16 border-b border-slate-200 dark:border-slate-800 card-panel px-6 flex items-center justify-between flex-shrink-0 z-10">
+        <div class="flex items-center gap-4">
+          <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg input-field text-xs font-mono">
+            <span>💻</span>
+            <span id="host-name" class="font-semibold">LocalHost</span>
+            <span class="text-slate-500">|</span>
+            <span id="host-platform" class="text-slate-400">Windows 11</span>
+          </div>
+
+          <div class="flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-semibold border border-emerald-500/30 bg-emerald-500/10 text-emerald-500">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span id="current-view-badge" class="uppercase tracking-wider font-mono text-[10px]">OVERVIEW VIEW</span>
+          </div>
+
+          <button id="btn-toggle-mode" title="Click to toggle between Safe Mode and Armed Prevention" class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold border transition-all cursor-pointer shadow-sm border-amber-500/40 bg-amber-500/15 text-amber-600 dark:text-amber-400">
+            <span>🛡️</span>
+            <span id="mode-text">SAFE MODE (DRY RUN)</span>
+            <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-black/20 text-slate-300">Click Switch</span>
+          </button>
+        </div>
+
+        <!-- Search Bar & User -->
+        <div class="flex items-center gap-4">
+          <div class="relative w-48 lg:w-64">
+            <input id="search-bar" type="text" placeholder="Search telemetry..." class="input-field w-full py-1.5 px-3 rounded-xl text-xs focus:outline-none focus:border-indigo-500" />
+          </div>
+          <div class="h-6 w-px bg-slate-700/40"></div>
+          <div class="w-8 h-8 rounded-xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-500 font-bold text-xs">
+            SA
+          </div>
+        </div>
+      </header>
+
+      <!-- View Containers -->
+      <div class="flex-1 overflow-y-auto p-4 md:p-6 space-y-6" id="main-content">
+        
+        <!-- View 1: SOC Overview -->
+        <div id="view-overview" class="space-y-6">
+          <div class="card-panel p-4 rounded-2xl flex flex-col md:flex-row justify-between items-center gap-4 border border-slate-200 dark:border-slate-800">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 text-lg">
+                📊
+              </div>
+              <div>
+                <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider">Threat Severity Distribution</h3>
+                <p className="text-[11px] text-slate-400">Breakdown of active security indicators</p>
+              </div>
+            </div>
+            <div className="w-full md:w-2/3 flex flex-col gap-1.5">
+              <div className="h-3.5 w-full bg-slate-800/60 rounded-full overflow-hidden flex" id="severity-bar">
+                <div id="bar-crit" className="bg-red-500 h-full transition-all" style="width: 0%"></div>
+                <div id="bar-high" className="bg-amber-500 h-full transition-all" style="width: 0%"></div>
+                <div id="bar-med" className="bg-blue-500 h-full transition-all" style="width: 0%"></div>
+                <div id="bar-low" className="bg-emerald-500 h-full transition-all" style="width: 100%"></div>
+              </div>
+              <div className="flex justify-between items-center text-[10px] font-mono text-slate-400 px-1">
+                <span>Critical (<b id="cnt-crit">0</b>)</span>
+                <span>High (<b id="cnt-high">0</b>)</span>
+                <span>Medium (<b id="cnt-med">0</b>)</span>
+                <span>Low (<b id="cnt-low">0</b>)</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <!-- Threat Gauge -->
+            <div class="lg:col-span-4 card-panel p-6 rounded-2xl flex flex-col justify-between relative overflow-hidden">
+              <div class="flex justify-between items-center mb-4">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                  ⚡ Threat Posture Gauge
+                </span>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">LIVE</span>
+              </div>
+
+              <div class="flex flex-col items-center justify-center my-2">
+                <div class="relative w-52 h-30 flex justify-center">
+                  <svg viewBox="0 0 100 50" class="w-full h-full">
+                    <defs>
+                      <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#10b981" />
+                        <stop offset="50%" stop-color="#f59e0b" />
+                        <stop offset="100%" stop-color="#ef4444" />
+                      </linearGradient>
+                    </defs>
+                    <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="rgba(148, 163, 184, 0.15)" stroke-width="12" stroke-linecap="round" />
+                    <path id="gauge-path" class="gauge-arc" d="M 10 50 A 40 40 0 0 1 90 50" stroke="url(#gaugeGradient)" style="stroke-dashoffset: 125;" />
+                  </svg>
+                  <div class="absolute bottom-1 flex items-baseline gap-0.5">
+                    <span id="gauge-score-num" class="text-4xl font-extrabold tracking-tight text-emerald-500">0</span>
+                    <span class="text-sm font-bold text-slate-400">%</span>
+                  </div>
+                </div>
+
+                <div id="gauge-status-label" class="mt-3 text-xs font-extrabold uppercase tracking-widest text-emerald-500">
+                  SYSTEM SECURE
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-slate-200 dark:border-slate-800 text-center">
+                <div class="p-2.5 rounded-xl input-field">
+                  <div class="text-[10px] text-slate-400 uppercase font-medium">Active Incidents</div>
+                  <div id="inc-active-count" class="text-lg font-bold text-slate-200">0</div>
+                </div>
+                <div class="p-2.5 rounded-xl input-field">
+                  <div class="text-[10px] text-slate-400 uppercase font-medium">High/Crit Severity</div>
+                  <div id="inc-crit-count" class="text-lg font-bold text-red-400">0</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Incident Queue -->
+            <div class="lg:col-span-8 card-panel p-6 rounded-2xl flex flex-col justify-between">
+              <div class="flex justify-between items-center mb-4 border-b border-slate-200 dark:border-slate-800 pb-3">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+                  ⚠️ Threat Incident Queue & Triage
+                </span>
+                <span id="queue-count-badge" class="text-xs font-mono text-slate-400">0 Incidents</span>
+              </div>
+
+              <div id="incident-queue-container" class="flex-1 overflow-y-auto space-y-3 max-h-[310px] pr-1">
+                <div class="text-center py-10 text-xs text-slate-400">No active threat incidents logged. System safe.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Response Action Log -->
+          <div class="card-panel p-6 rounded-2xl space-y-4">
+            <h3 class="text-xs font-bold text-indigo-400 uppercase tracking-wider flex items-center gap-2">
+              🛡️ Real-Time Response Log & Automated Containment Actions
+            </h3>
+            <table class="w-full text-xs text-left">
+              <thead class="text-slate-400 font-medium border-b border-slate-200 dark:border-slate-800">
+                <tr>
+                  <th class="py-2">Timestamp</th>
+                  <th class="py-2">Action</th>
+                  <th class="py-2">Target Entity</th>
+                  <th class="py-2">Outcome</th>
+                  <th class="py-2">Detail / Reason</th>
+                </tr>
+              </thead>
+              <tbody id="response-log-tbody" class="font-mono text-[11px] divide-y divide-slate-200 dark:divide-slate-800/50">
+                <tr><td colSpan="5" class="py-6 text-center text-slate-500">No automated actions logged.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- View 2: Executive CISO View -->
+        <div id="view-executive" class="hidden space-y-6">
+          <div class="card-panel p-6 rounded-2xl border border-slate-200 dark:border-slate-800">
+            <h2 class="text-lg font-bold mb-2">Executive CISO Risk Overview</h2>
+            <p class="text-xs text-slate-400">High-level enterprise security posture and compliance metrics.</p>
+          </div>
+        </div>
+
+        <!-- View 3: Threat Hunter View -->
+        <div id="view-threat_hunter" class="hidden space-y-6">
+          <div class="card-panel p-6 rounded-2xl border border-slate-200 dark:border-slate-800">
+            <h2 class="text-lg font-bold mb-2">Threat Hunter Command Center</h2>
+            <p class="text-xs text-slate-400">Deep signal anomaly inspection and process execution auditing.</p>
+          </div>
+        </div>
+
+        <!-- View 4: Signals -->
+        <div id="view-detections" class="hidden card-panel p-6 rounded-2xl space-y-4">
+          <h3 class="text-sm font-bold text-indigo-400">Signal Detections & Rule Triggers</h3>
+          <table class="w-full text-xs text-left">
+            <thead class="text-slate-400 font-medium">
+              <tr><th class="py-2">Time</th><th class="py-2">Rule ID</th><th class="py-2">Score</th><th class="py-2">Target PID</th></tr>
+            </thead>
+            <tbody id="signals-tbody" class="font-mono text-[11px] divide-y divide-slate-200 dark:divide-slate-800/50"></tbody>
+          </table>
+        </div>
+
+        <!-- View 5: Processes -->
+        <div id="view-processes" class="hidden card-panel p-6 rounded-2xl space-y-4">
+          <h3 class="text-sm font-bold text-indigo-400">Process Pool Directory</h3>
+          <table class="w-full text-xs text-left">
+            <thead class="text-slate-400 font-medium">
+              <tr><th class="py-2">PID</th><th class="py-2">Name</th><th class="py-2">User</th><th class="py-2">CPU%</th><th class="py-2">Cmdline</th></tr>
+            </thead>
+            <tbody id="processes-tbody" class="font-mono text-[11px] divide-y divide-slate-200 dark:divide-slate-800/50"></tbody>
+          </table>
+        </div>
+
+        <!-- View 6: Telemetry -->
+        <div id="view-telemetry" class="hidden card-panel p-6 rounded-2xl space-y-4">
+          <h3 class="text-sm font-bold text-indigo-400">Raw Ingested Events</h3>
+          <table class="w-full text-xs text-left">
+            <thead class="text-slate-400 font-medium">
+              <tr><th class="py-2">Time</th><th class="py-2">Category</th><th class="py-2">Action</th><th class="py-2">Entity</th></tr>
+            </thead>
+            <tbody id="events-tbody" class="font-mono text-[11px] divide-y divide-slate-200 dark:divide-slate-800/50"></tbody>
+          </table>
+        </div>
+
+        <!-- View 7: Rules -->
+        <div id="view-rules" class="hidden card-panel p-6 rounded-2xl space-y-4">
+          <h3 class="text-sm font-bold text-indigo-400">YARA Signatures & Active Rules</h3>
+          <div class="text-xs font-mono text-slate-300">Rules active and enforcing in engine core.</div>
+        </div>
+
+        <!-- View 8: Config -->
+        <div id="view-config" class="hidden card-panel p-6 rounded-2xl space-y-4">
+          <h3 class="text-sm font-bold text-indigo-400">Agent Configuration & Pipeline Health</h3>
+          <div class="text-xs font-mono text-slate-300">Pipeline active and ingesting telemetry.</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= ULTRA-STABLE VANILLA JS SCRIPT ================= -->
+  <script>
+    // Local Token Management
     const getToken = () => localStorage.getItem("osentinel_token");
     const setToken = (t) => t ? localStorage.setItem("osentinel_token", t) : localStorage.removeItem("osentinel_token");
 
-    const apiFetch = async (path, options = {}) => {
-      const headers = { "Content-Type": "application/json", ...options.headers };
+    // Global Telemetry State Store
+    let state = {
+      status: {},
+      metrics: {},
+      events: [],
+      detections: [],
+      incidents: [],
+      actions: [],
+      processes: []
+    };
+
+    // DOM Elements
+    const authScreen = document.getElementById("auth-screen");
+    const appScreen = document.getElementById("app-screen");
+    const loginForm = document.getElementById("login-form");
+    const loginErr = document.getElementById("login-error");
+    const currentViewBadge = document.getElementById("current-view-badge");
+
+    // Check Auth State
+    function init() {
       const token = getToken();
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-      
-      const res = await fetch(path, { ...options, headers });
-      if (res.status === 401 && !path.includes("/api/health")) {
-        setToken(null);
-        throw new Error("Unauthorized");
-      }
-      return res;
-    };
-
-    const Icon = ({ name, className = "w-4 h-4", onClick, title }) => {
-      const icons = {
-        "shield": <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>,
-        "shield-check": <g><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></g>,
-        "shield-alert": <g><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4 M12 16h.01"/></g>,
-        "activity": <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>,
-        "layout-dashboard": <path d="M3 3h7v9H3zm11 0h7v5h-7zm0 9h7v9h-7zM3 15h7v6H3z"/>,
-        "cpu": <g><path d="M18 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zM9 9h6v6H9z"/><path d="M9 1v3 M15 1v3 M9 20v3 M15 20v3 M1 9h3 M1 15h3 M20 9h3 M20 15h3"/></g>,
-        "file-code": <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z M10 13l-2 2 2 2 M14 13l2 2-2 2"/>,
-        "server": <g><path d="M2 2h20v8H2zm0 12h20v8H2z"/><circle cx="6" cy="6" r="1"/><circle cx="6" cy="18" r="1"/></g>,
-        "sun": <g><circle cx="12" cy="12" r="4"/><path d="M12 2v2 M12 20v2 M4.93 4.93l1.41 1.41 M17.66 17.66l1.41 1.41 M2 12h2 M20 12h2 M6.34 17.66l-1.41 1.41 M19.07 4.93l-1.41 1.41"/></g>,
-        "moon": <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>,
-        "log-out": <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4 M16 17l5-5-5-5 M21 12H9"/>,
-        "search": <g><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></g>,
-        "monitor": <path d="M20 3H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2z M12 17v4 M8 21h8"/>,
-        "bar-chart-2": <path d="M18 20V10 M12 20V4 M6 20v-6"/>,
-        "alert-triangle": <g><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4 M12 17h.01"/></g>,
-        "check-circle-2": <g><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></g>,
-        "wifi-off": <path d="M1 1l22 22 M16.72 11.06A10.94 10.94 0 0 1 19 12.55 M5 12.55a10.94 10.94 0 0 1 5.17-2.39 M10.71 5.05A16 16 0 0 1 22.58 9 M1.42 9a15.91 15.91 0 0 1 4.7-3.16 M8.53 16.11a6 6 0 0 1 6.95 0 M12 20h.01"/>,
-        "check-square": <path d="M9 11l3 3L22 4 M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>,
-        "bot": <g><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4 M8 16h0 M16 16h0"/></g>,
-        "mail": <g><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></g>,
-        "key": <g><circle cx="7.5" cy="15.5" r="5.5"/><path d="M21 2l-9.6 9.6 M15.5 7.5l3 3 M18.5 4.5l3 3"/></g>,
-        "award": <g><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></g>,
-        "target": <g><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></g>,
-        "user": <g><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></g>,
-        "message-square": <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>,
-        "x": <path d="M18 6L6 18 M6 6l12 12"/>,
-        "send": <path d="M22 2L11 13 M22 2l-7 20-4-9-9-4 20-7z"/>
-      };
-
-      return (
-        <svg 
-          xmlns="http://www.w3.org/2000/svg" 
-          viewBox="0 0 24 24" 
-          fill="none" 
-          stroke="currentColor" 
-          strokeWidth="2" 
-          strokeLinecap="round" 
-          strokeLinejoin="round" 
-          className={className} 
-          onClick={onClick} 
-          title={title}
-        >
-          {icons[name] || <circle cx="12" cy="12" r="8"/>}
-        </svg>
-      );
-    };
-
-    // --- LOGIN SCREEN ---
-    const LoginScreen = ({ onLogin, theme, toggleTheme }) => {
-      const [email, setEmail] = useState("asus f15");
-      const [password, setPassword] = useState("admin");
-      const [error, setError] = useState("");
-
-      const handleSubmit = async (e) => {
-        e.preventDefault();
-        try {
-          const params = new URLSearchParams();
-          params.append("username", email);
-          params.append("password", password);
-          const r = await fetch("/api/token", {
-            method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: params
-          });
-          if (!r.ok) throw new Error("Invalid credentials");
-          const data = await r.json();
-          onLogin(data.access_token);
-        } catch (err) {
-          setError(err.message);
-        }
-      };
-
-      return (
-        <div className="flex h-screen w-full items-center justify-center relative p-4">
-          <div className="absolute top-6 left-6 flex items-center gap-3">
-             <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30">
-               <Icon name="shield" className="w-6 h-6" />
-             </div>
-             <div className="flex flex-col">
-               <span className="text-xl font-bold tracking-tight">OSentinel</span>
-               <span className="text-xs text-indigo-500 font-mono tracking-widest uppercase font-semibold">SOC Command Suite</span>
-             </div>
-          </div>
-
-          <button onClick={toggleTheme} className="absolute top-6 right-6 p-2.5 rounded-xl card-panel hover:border-indigo-500 transition-colors">
-            <Icon name={theme === 'dark' ? "sun" : "moon"} className="w-5 h-5 text-indigo-500" />
-          </button>
-          
-          <div className="card-panel p-8 sm:p-10 rounded-2xl w-full max-w-md flex flex-col items-center z-10 relative">
-            <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mb-4">
-              <Icon name="shield-check" className="text-indigo-500 w-8 h-8" />
-            </div>
-            <h2 className="text-xl font-bold mb-1 text-center">Sign In to Dashboard</h2>
-            <p className="text-xs text-slate-500 mb-6 text-center">Authenticate to access live telemetry and threat prevention</p>
-            {error && (
-              <div className="w-full bg-red-500/10 border border-red-500/20 text-red-500 p-3 rounded-xl text-xs mb-4 flex items-center gap-2">
-                <Icon name="alert-triangle" className="w-4 h-4 flex-shrink-0" />
-                <span>{error}</span>
-              </div>
-            )}
-            <form onSubmit={handleSubmit} className="w-full flex flex-col gap-4">
-              <div>
-                <label className="text-xs font-semibold mb-1.5 block text-slate-400">Username / Email</label>
-                <div className="relative">
-                  <Icon name="mail" className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
-                  <input type="text" placeholder="Enter username" value={email} onChange={e=>setEmail(e.target.value)}
-                    className="input-field w-full rounded-xl py-2.5 pl-10 pr-4 text-sm font-mono focus:outline-none focus:border-indigo-500 transition-colors" />
-                </div>
-              </div>
-              <div>
-                <label className="text-xs font-semibold mb-1.5 block text-slate-400">Password</label>
-                <div className="relative">
-                  <Icon name="key" className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
-                  <input type="password" placeholder="Enter password" value={password} onChange={e=>setPassword(e.target.value)}
-                    className="input-field w-full rounded-xl py-2.5 pl-10 pr-10 text-sm font-mono focus:outline-none focus:border-indigo-500 transition-colors" />
-                </div>
-              </div>
-              <button type="submit" className="mt-2 w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-3 rounded-xl transition-all shadow-lg shadow-indigo-600/25 text-sm flex items-center justify-center gap-2">
-                <span>Authenticate Session</span>
-                <Icon name="arrow-right" className="w-4 h-4" />
-              </button>
-            </form>
-          </div>
-        </div>
-      );
-    };
-
-    // --- CHATBOT ---
-    const Chatbot = ({ session, hostState }) => {
-      const [isOpen, setIsOpen] = useState(false);
-      const [messages, setMessages] = useState([]);
-      const [input, setInput] = useState("");
-      const [loading, setLoading] = useState(false);
-      const scrollRef = useRef();
-
-      useEffect(() => {
-        if(scrollRef.current && isOpen) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-      }, [messages, isOpen]);
-
-      useEffect(() => {
-        const handleAnalyze = (e) => {
-          setIsOpen(true);
-          setInput(`Analyze incident ${e.detail}`);
-        };
-        document.addEventListener("analyze_incident", handleAnalyze);
-        return () => document.removeEventListener("analyze_incident", handleAnalyze);
-      }, []);
-
-      const sendMessage = async (e) => {
-        if(e) e.preventDefault();
-        if(!input.trim() || loading) return;
-        
-        const userMsg = input.trim();
-        setInput("");
-        setMessages(p => [...p, { role: "user", text: userMsg }]);
-        setLoading(true);
-        
-        try {
-          const res = await apiFetch("/api/assistant/chat", {
-            method: "POST",
-            body: JSON.stringify({ session, message: userMsg })
-          });
-          if (!res.ok) throw new Error(`Server returned ${res.status}`);
-          const data = await res.json();
-          setMessages(p => [...p, { role: "ai", text: data.reply || "No response received." }]);
-        } catch(err) {
-          setMessages(p => [...p, { role: "ai", text: "AI Assistant Error: " + err.message }]);
-        } finally {
-          setLoading(false);
-        }
-      };
-
-      if (!isOpen) {
-        return (
-          <button 
-            onClick={() => setIsOpen(true)}
-            className="fixed bottom-6 right-6 px-4 py-3 bg-indigo-600 text-white rounded-2xl flex items-center gap-3 shadow-xl shadow-indigo-600/30 hover:bg-indigo-500 transition-all z-50 font-medium text-xs"
-          >
-            <Icon name="bot" className="w-5 h-5" />
-            <span>SOC Analyst AI</span>
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          </button>
-        );
-      }
-
-      return (
-        <div className="fixed bottom-6 right-6 w-96 card-panel rounded-2xl overflow-hidden flex flex-col z-50 shadow-2xl border border-indigo-500/30">
-          <div className="bg-indigo-600 text-white p-3.5 flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <Icon name="bot" className="w-5 h-5" />
-              <span className="text-xs font-semibold tracking-wide">SOC Analyst Assistant</span>
-            </div>
-            <div className="flex items-center gap-2 text-indigo-200">
-              <Icon name="trash-2" onClick={() => setMessages([])} className="w-4 h-4 cursor-pointer hover:text-white" title="Clear Chat" />
-              <Icon name="x" onClick={() => setIsOpen(false)} className="w-4 h-4 cursor-pointer hover:text-white" />
-            </div>
-          </div>
-          
-          <div className="h-[340px] overflow-y-auto p-4 flex flex-col gap-3 text-xs" ref={scrollRef}>
-            {messages.length === 0 && (
-              <div className="flex flex-col gap-2 my-auto">
-                <p className="text-slate-400 text-center mb-2">How can I assist your incident response today?</p>
-                <button onClick={() => setInput("What is the highest risk incident?")} className="p-2.5 rounded-xl border border-slate-700/50 hover:border-indigo-500 text-left text-indigo-400 transition-colors">
-                  "What is the highest risk incident?"
-                </button>
-                <button onClick={() => setInput("Summarize recent process anomalies.")} className="p-2.5 rounded-xl border border-slate-700/50 hover:border-indigo-500 text-left text-indigo-400 transition-colors">
-                  "Summarize recent process anomalies."
-                </button>
-              </div>
-            )}
-            {messages.map((m, i) => (
-              <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`p-3 rounded-2xl max-w-[85%] leading-relaxed ${m.role === 'user' ? 'bg-indigo-600 text-white rounded-br-none' : 'input-field rounded-bl-none'}`}>
-                  {m.text}
-                </div>
-              </div>
-            ))}
-            {loading && (
-              <div className="flex gap-2 items-center text-slate-400">
-                <Icon name="loader-2" className="w-4 h-4 animate-spin text-indigo-500" />
-                <span>Analyzing telemetry data...</span>
-              </div>
-            )}
-          </div>
-          
-          <form onSubmit={sendMessage} className="p-3 border-t border-slate-800 flex items-center gap-2">
-            <input type="text" placeholder="Ask AI analyst..." value={input} onChange={e=>setInput(e.target.value)}
-              className="input-field text-xs w-full outline-none py-2 px-3 rounded-xl" />
-            <button type="submit" className="p-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-500 transition-colors">
-              <Icon name="send" className="w-4 h-4" />
-            </button>
-          </form>
-        </div>
-      );
-    };
-
-    // --- MAIN DASHBOARD ---
-    const Dashboard = ({ state, logout, theme, toggleTheme }) => {
-      const [viewMode, setViewMode] = useState("overview");
-      const [searchTerm, setSearchTerm] = useState("");
-      const [severityFilter, setSeverityFilter] = useState("all");
-      const [isolatedHosts, setIsolatedHosts] = useState({});
-      const [acknowledgedIncidents, setAcknowledgedIncidents] = useState({});
-
-      const riskScore = useMemo(() => {
-        const incidents = state?.incidents || [];
-        // Only count 'open' incidents
-        const openIncidents = incidents.filter(i => i.state !== 'closed' && i.state !== 'contained');
-        if (openIncidents.length === 0) return 0;
-        
-        // Return the exact score of the most critical open incident
-        const top = Math.max(...openIncidents.map(i => i.score));
-        return Math.min(100.0, top);
-      }, [state?.incidents]);
-
-      // Calculate Severity Counts
-      const severityCounts = useMemo(() => {
-        const incidents = state?.incidents || [];
-        let crit = 0, high = 0, med = 0, low = 0;
-        incidents.forEach(i => {
-          if (i.score >= 70) crit++;
-          else if (i.score >= 40) high++;
-          else if (i.score >= 20) med++;
-          else low++;
-        });
-        return { crit, high, med, low, total: incidents.length || 1 };
-      }, [state?.incidents]);
-
-      const filteredIncidents = useMemo(() => {
-        const incidents = state?.incidents || [];
-        return incidents.filter(i => {
-          if (severityFilter === "critical" && i.score < 70) return false;
-          if (severityFilter === "high" && (i.score < 40 || i.score >= 70)) return false;
-          if (severityFilter === "medium" && (i.score < 20 || i.score >= 40)) return false;
-          return true;
-        });
-      }, [state?.incidents, severityFilter]);
-
-      const handleToggleMode = async () => {
-        try {
-          const res = await apiFetch("/api/config/mode", { method: "POST" });
-          if (res.ok) {
-            const data = await res.json();
-            setState(prev => ({
-              ...prev,
-              status: {
-                ...prev?.status,
-                response: { ...prev?.status?.response, mode: data.mode }
-              }
-            }));
-          }
-        } catch(err) {
-          console.error("Failed to toggle mode:", err);
-        }
-      };
-
-      const toggleIsolate = (id) => {
-        setIsolatedHosts(prev => ({ ...prev, [id]: !prev[id] }));
-      };
-
-      const toggleAcknowledge = (id) => {
-        setAcknowledgedIncidents(prev => ({ ...prev, [id]: !prev[id] }));
-      };
-
-      const filteredSignals = useMemo(() => {
-        const detections = state?.detections || [];
-        if (!searchTerm) return detections;
-        return detections.filter(d => 
-          (d.rule_id || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (d.entity || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (d.title || d.detail || '').toLowerCase().includes(searchTerm.toLowerCase())
-        );
-      }, [state?.detections, searchTerm]);
-
-      const filteredEvents = useMemo(() => {
-        const events = state?.events || [];
-        if (!searchTerm) return events;
-        return events.filter(e => 
-          (e.category || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (e.action || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (e.entity || '').toLowerCase().includes(searchTerm.toLowerCase())
-        );
-      }, [state?.events, searchTerm]);
-
-      const filteredProcesses = useMemo(() => {
-        const procs = state?.processes || [];
-        if (!searchTerm) return procs;
-        return procs.filter(p => 
-          (p.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (p.user || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (p.cmdline || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (p.pid ? String(p.pid) : '').includes(searchTerm)
-        );
-      }, [state?.processes, searchTerm]);
-
-      return (
-        <div className="flex h-screen w-full overflow-hidden">
-          {/* Sidebar */}
-          <aside className="w-16 md:w-64 border-r border-slate-200 dark:border-slate-800 flex flex-col justify-between flex-shrink-0 card-panel z-20">
-            <div>
-              <div className="h-16 flex items-center px-4 border-b border-slate-200 dark:border-slate-800 gap-3">
-                <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center text-white flex-shrink-0 shadow-lg shadow-indigo-600/30">
-                  <Icon name="shield" className="w-5 h-5" />
-                </div>
-                <div className="hidden md:flex flex-col">
-                  <span className="font-bold text-sm tracking-tight">OSentinel</span>
-                  <span className="text-[10px] text-indigo-500 font-mono tracking-wider font-semibold">ENTERPRISE SOC</span>
-                </div>
-              </div>
-
-              <nav className="p-3 space-y-1.5">
-                {[
-                  { id: 'overview', label: 'SOC Analyst Role', icon: 'shield' },
-                  { id: 'executive', label: 'Executive CISO Role', icon: 'award' },
-                  { id: 'threat_hunter', label: 'Threat Hunter Role', icon: 'target' },
-                  { id: 'detections', label: 'Signal Detections', icon: 'shield-alert' },
-                  { id: 'processes', label: 'Process Pool', icon: 'cpu' },
-                  { id: 'telemetry', label: 'Raw Telemetry', icon: 'activity' },
-                  { id: 'rules', label: 'YARA Signatures', icon: 'file-code' },
-                  { id: 'config', label: 'Agent Status', icon: 'server' },
-                ].map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => setViewMode(item.id)}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium transition-all ${
-                      viewMode === item.id 
-                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20 font-semibold' 
-                        : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:text-slate-200'
-                    }`}
-                  >
-                    <Icon name={item.icon} className="w-4 h-4" />
-                    <span className="hidden md:inline">{item.label}</span>
-                  </button>
-                ))}
-              </nav>
-            </div>
-
-            <div className="p-3 border-t border-slate-200 dark:border-slate-800 space-y-2">
-              <button onClick={toggleTheme} className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-                <Icon name={theme === 'dark' ? "sun" : "moon"} className="w-4 h-4 text-indigo-500" />
-                <span className="hidden md:inline font-medium">{theme === 'dark' ? 'Light Theme' : 'Dark Theme'}</span>
-              </button>
-              
-              <button onClick={logout} className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs text-red-500 hover:bg-red-500/10 transition-colors">
-                <Icon name="log-out" className="w-4 h-4" />
-                <span className="hidden md:inline font-medium">Logout Session</span>
-              </button>
-            </div>
-          </aside>
-
-          {/* Main Content Area */}
-          <div className="flex-1 flex flex-col h-full overflow-hidden">
-            
-            {/* Header */}
-            <header className="h-16 border-b border-slate-200 dark:border-slate-800 card-panel px-6 flex items-center justify-between flex-shrink-0 z-10">
-              <div className="flex items-center gap-4">
-                <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg input-field text-xs font-mono">
-                  <Icon name="monitor" className="w-3.5 h-3.5 text-indigo-500" />
-                  <span className="font-semibold">{state?.status?.host?.hostname || 'LocalHost'}</span>
-                  <span className="text-slate-500">|</span>
-                  <span className="text-slate-400">{state?.status?.host?.platform || 'Win 11'}</span>
-                </div>
-
-                <div className="flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-semibold border border-emerald-500/30 bg-emerald-500/10 text-emerald-500">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                  <span className="uppercase tracking-wider font-mono text-[10px]">{viewMode} VIEW</span>
-                </div>
-
-                {state?.status?.response?.mode === "enforcing" ? (
-                  <div className="hidden md:flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border border-red-500/30 bg-red-500/10 text-red-500">
-                    <Icon name="shield-check" className="w-3.5 h-3.5" />
-                    <span>PREVENTION ARMED</span>
-                  </div>
-                ) : (
-                  <div className="hidden md:flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border border-amber-500/30 bg-amber-500/10 text-amber-500">
-                    <Icon name="shield-alert" className="w-3.5 h-3.5" />
-                    <span>SAFE MODE (DRY RUN)</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Search */}
-              <div className="flex items-center gap-4">
-                <div className="relative w-48 lg:w-64">
-                  <Icon name="search" className="absolute left-3 top-2.5 w-3.5 h-3.5 text-slate-400" />
-                  <input
-                    type="text"
-                    placeholder={`Search in ${viewMode}...`}
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="input-field w-full py-1.5 pl-9 pr-3 rounded-xl text-xs focus:outline-none focus:border-indigo-500 transition-colors"
-                  />
-                </div>
-                <div className="h-6 w-px bg-slate-700/40"></div>
-                <div className="w-8 h-8 rounded-xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-500 font-bold text-xs">
-                  SA
-                </div>
-              </div>
-            </header>
-
-            {/* Content Body */}
-            <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
-
-              {/* ================= ENHANCED VIEW 1: SOC OVERVIEW ================= */}
-              {viewMode === "overview" && (
-                <>
-                  {/* Top Dashboard Banner - Severity Distribution */}
-                  <div className="card-panel p-4 rounded-2xl flex flex-col md:flex-row justify-between items-center gap-4 border border-slate-200 dark:border-slate-800">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
-                        <Icon name="bar-chart-2" className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider">Threat Severity Distribution</h3>
-                        <p className="text-[11px] text-slate-400">Breakdown of actively flagged security alerts</p>
-                      </div>
-                    </div>
-
-                    <div className="w-full md:w-2/3 flex flex-col gap-1.5">
-                      <div className="h-3.5 w-full bg-slate-800/60 rounded-full overflow-hidden flex">
-                        <div style={{ width: `${(severityCounts.crit / severityCounts.total) * 100}%` }} className="bg-red-500 h-full transition-all" title="Critical"></div>
-                        <div style={{ width: `${(severityCounts.high / severityCounts.total) * 100}%` }} className="bg-amber-500 h-full transition-all" title="High"></div>
-                        <div style={{ width: `${(severityCounts.med / severityCounts.total) * 100}%` }} className="bg-blue-500 h-full transition-all" title="Medium"></div>
-                        <div style={{ width: `${(severityCounts.low / severityCounts.total) * 100}%` }} className="bg-emerald-500 h-full transition-all" title="Low"></div>
-                      </div>
-                      <div className="flex justify-between items-center text-[10px] font-mono text-slate-400 px-1">
-                        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-500"></span> Critical ({severityCounts.crit})</span>
-                        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500"></span> High ({severityCounts.high})</span>
-                        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500"></span> Medium ({severityCounts.med})</span>
-                        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500"></span> Low ({severityCounts.low})</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                    {/* Gauge Posture Card */}
-                    <div className="lg:col-span-4 card-panel p-6 rounded-2xl flex flex-col justify-between relative overflow-hidden">
-                      <div className="flex justify-between items-center mb-4">
-                        <span className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
-                          <Icon name="activity" className="w-4 h-4 text-indigo-500" />
-                          Threat Posture Gauge
-                        </span>
-                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">LIVE MONITORING</span>
-                      </div>
-
-                      <div className="flex flex-col items-center justify-center my-2">
-                        <div className="relative w-52 h-30 flex justify-center">
-                          <svg viewBox="0 0 100 50" className="w-full h-full">
-                            <defs>
-                              <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                                <stop offset="0%" stopColor="#10b981" />
-                                <stop offset="50%" stopColor="#f59e0b" />
-                                <stop offset="100%" stopColor="#ef4444" />
-                              </linearGradient>
-                            </defs>
-                            <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="rgba(148, 163, 184, 0.15)" strokeWidth="12" strokeLinecap="round" />
-                            <path className="gauge-arc" d="M 10 50 A 40 40 0 0 1 90 50" stroke="url(#gaugeGradient)" style={{ strokeDashoffset: 125 - (riskScore / 100) * 125 }} />
-                          </svg>
-                          <div className="absolute bottom-1 flex items-baseline gap-0.5">
-                            <span className={`text-4xl font-extrabold tracking-tight ${riskScore > 80 ? 'text-red-500' : riskScore > 40 ? 'text-amber-500' : 'text-emerald-500'}`}>
-                              {Math.round(riskScore)}
-                            </span>
-                            <span className="text-sm font-bold text-slate-400">%</span>
-                          </div>
-                        </div>
-
-                        <div className={`mt-3 text-xs font-extrabold uppercase tracking-widest ${riskScore > 80 ? 'text-red-500' : riskScore > 40 ? 'text-amber-500' : 'text-emerald-500'}`}>
-                          {riskScore >= 100 ? "MAXIMUM RISK LEVEL" : riskScore > 80 ? "CRITICAL THREAT" : riskScore > 40 ? "ELEVATED RISK" : "SYSTEM SECURE"}
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-slate-200 dark:border-slate-800 text-center">
-                        <div className="p-2.5 rounded-xl input-field">
-                          <div className="text-[10px] text-slate-400 uppercase font-medium">Active Incidents</div>
-                          <div className="text-lg font-bold text-slate-200">{state?.incidents?.length || 0}</div>
-                        </div>
-                        <div className="p-2.5 rounded-xl input-field">
-                          <div className="text-[10px] text-slate-400 uppercase font-medium">High/Crit Severity</div>
-                          <div className="text-lg font-bold text-red-400">{severityCounts.crit + severityCounts.high}</div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* ENHANCED INCIDENT QUEUE WITH TRIAGE & FILTERS */}
-                    <div className="lg:col-span-8 card-panel p-6 rounded-2xl flex flex-col justify-between">
-                      <div className="flex flex-wrap justify-between items-center gap-3 mb-4 border-b border-slate-200 dark:border-slate-800/80 pb-3">
-                        <div className="flex items-center gap-2">
-                          <div className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-ping"></div>
-                          <span className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
-                            <Icon name="alert-triangle" className="w-4 h-4 text-amber-500" />
-                            Threat Incident Queue & Triage
-                          </span>
-                        </div>
-
-                        {/* Severity Quick Filter Pills */}
-                        <div className="flex items-center gap-1.5 bg-slate-900/60 p-1 rounded-xl border border-slate-800 text-[11px] font-medium">
-                          {['all', 'critical', 'high', 'medium'].map(sev => (
-                            <button
-                              key={sev}
-                              onClick={() => setSeverityFilter(sev)}
-                              className={`px-2.5 py-1 rounded-lg capitalize transition-all ${
-                                severityFilter === sev
-                                  ? 'bg-indigo-600 text-white font-semibold shadow-sm'
-                                  : 'text-slate-400 hover:text-slate-200'
-                              }`}
-                            >
-                              {sev}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Incident Queue List */}
-                      <div className="flex-1 overflow-y-auto space-y-3 max-h-[310px] pr-1">
-                        {filteredIncidents.length === 0 && (
-                          <div className="h-full flex flex-col items-center justify-center py-12 text-slate-400 text-xs gap-2">
-                            <Icon name="check-circle-2" className="w-10 h-10 text-emerald-500" />
-                            <span className="font-semibold text-slate-300">Queue Clear</span>
-                            <span className="text-[11px] text-slate-500">No active threats matching current filter criteria</span>
-                          </div>
-                        )}
-                        
-                        {filteredIncidents.map(i => {
-                          const isCrit = i.score >= 70;
-                          const isHigh = i.score >= 50;
-                          const badgeColor = isCrit 
-                            ? "bg-red-500/20 text-red-500 border-red-500/30" 
-                            : isHigh 
-                              ? "bg-amber-500/20 text-amber-500 border-amber-500/30" 
-                              : "bg-emerald-500/20 text-emerald-500 border-emerald-500/30";
-                          const barColor = isCrit ? "bg-red-500" : isHigh ? "bg-amber-500" : "bg-emerald-500";
-                          const isIsolated = isolatedHosts[i.id];
-                          const isAck = acknowledgedIncidents[i.id];
-
-                          return (
-                            <div key={i.id} className={`p-4 rounded-xl border ${isAck ? 'border-slate-800 opacity-60' : 'border-slate-200 dark:border-slate-800'} hover:border-indigo-500/60 input-field transition-all flex flex-col gap-3 group`}>
-                              <div className="flex flex-col sm:flex-row items-start justify-between gap-3">
-                                <div className="flex items-start gap-3">
-                                  <div className={`px-2.5 py-1.5 rounded-xl text-center flex flex-col items-center justify-center border ${badgeColor}`}>
-                                    <span className="text-[9px] font-black tracking-wider uppercase">{isCrit ? 'CRIT' : isHigh ? 'HIGH' : 'LOW'}</span>
-                                    <span className="text-sm font-extrabold font-mono">{Math.round(i.score)}</span>
-                                  </div>
-
-                                  <div>
-                                    <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                      <h4 className="text-xs font-bold text-indigo-400 font-mono">{i.detections[0]?.rule_id || "Behavioral Threat Trigger"}</h4>
-                                      <span className="text-[10px] font-mono text-slate-500">ID: {i.id.substring(0,8)}</span>
-                                      {isIsolated && <span className="text-[10px] px-2 py-0.2 rounded bg-red-500/20 text-red-400 border border-red-500/30 font-semibold">ISOLATED</span>}
-                                      {isAck && <span className="text-[10px] px-2 py-0.2 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-semibold">ACKNOWLEDGED</span>}
-                                    </div>
-                                    <p className="text-xs text-slate-300 leading-snug">{i.detections[0]?.title || "Suspicious system activity detected across endpoint process hierarchy."}</p>
-                                  </div>
-                                </div>
-
-                                {/* Triage Quick Actions */}
-                                <div className="flex items-center gap-1.5 flex-shrink-0 self-end sm:self-start">
-                                  <button 
-                                    onClick={() => toggleIsolate(i.id)}
-                                    title={isIsolated ? "Restore Host Connectivity" : "Isolate Endpoint"}
-                                    className={`p-1.5 rounded-lg text-[11px] font-medium transition-all border ${
-                                      isIsolated 
-                                        ? 'bg-red-600 text-white border-red-500' 
-                                        : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-red-400 hover:border-red-500/50'
-                                    }`}
-                                  >
-                                    <Icon name="wifi-off" className="w-3.5 h-3.5" />
-                                  </button>
-
-                                  <button 
-                                    onClick={() => toggleAcknowledge(i.id)}
-                                    title="Acknowledge Incident"
-                                    className={`p-1.5 rounded-lg text-[11px] font-medium transition-all border ${
-                                      isAck 
-                                        ? 'bg-emerald-600 text-white border-emerald-500' 
-                                        : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-emerald-400 hover:border-emerald-500/50'
-                                    }`}
-                                  >
-                                    <Icon name="check-square" className="w-3.5 h-3.5" />
-                                  </button>
-
-                                  <button 
-                                    onClick={() => document.dispatchEvent(new CustomEvent("analyze_incident", { detail: i.id }))}
-                                    className="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-medium transition-all flex items-center gap-1.5 shadow-md shadow-indigo-600/20"
-                                  >
-                                    <Icon name="bot" className="w-3.5 h-3.5" />
-                                    <span>AI Triage</span>
-                                  </button>
-                                </div>
-                              </div>
-
-                              <div className="w-full bg-slate-800/40 h-1.5 rounded-full overflow-hidden">
-                                <div className={`h-full ${barColor}`} style={{ width: `${Math.min(100, i.score)}%` }}></div>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Sparkline Metrics & Live Activity Stream Row */}
-                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                    {/* KPI Metrics Column */}
-                    <div className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {[
-                        { label: "Memory Allocation", value: `${state?.metrics?.mem_percent?.toFixed(1) || '0.0'}%`, key: 'mem_percent', color: '#f97316', status: state?.metrics?.mem_percent > 85 ? 'High' : 'Normal' },
-                        { label: "CPU Core Load", value: `${state?.metrics?.cpu_percent?.toFixed(1) || '0.0'}%`, key: 'cpu_percent', color: '#6366f1', status: state?.metrics?.cpu_percent > 80 ? 'Elevated' : 'Normal' },
-                        { label: "Kernel Switches", value: `${state?.metrics?.ctx_switches_per_s?.toFixed(0) || 0}/s`, key: 'ctx_switches_per_s', color: '#10b981', status: 'Optimal' },
-                        { label: "Active Process Pool", value: state?.metrics?.process_count || 0, key: 'process_count', color: '#3b82f6', status: 'Stable' },
-                      ].map((m, idx) => (
-                        <div key={idx} className="card-panel p-4 rounded-2xl flex flex-col justify-between">
-                          <div className="flex justify-between items-center mb-1">
-                            <span className="text-xs text-slate-400 font-medium">{m.label}</span>
-                            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300">{m.status}</span>
-                          </div>
-                          <div className="flex items-baseline justify-between mt-1">
-                            <span className="text-xl font-bold font-mono text-slate-100">{m.value}</span>
-                            <span className="text-[10px] text-emerald-400 font-mono">▲ Live</span>
-                          </div>
-                          <svg className="w-full h-8 mt-2" viewBox="0 0 100 30" preserveAspectRatio="none">
-                            <polyline 
-                              fill="none" 
-                              stroke={m.color} 
-                              strokeWidth="2" 
-                              points={(state?.history || []).map((h, i, arr) => `${(i / (arr.length || 1)) * 100},${30 - (Math.min(h[m.key] || 0, 100) / 100) * 30}`).join(' ')} 
-                            />
-                          </svg>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* LIVE ACTIVITY TICKER WIDGET */}
-                    <div className="lg:col-span-4 card-panel p-4 rounded-2xl flex flex-col justify-between border border-slate-200 dark:border-slate-800">
-                      <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800/80 pb-2.5 mb-2">
-                        <div className="flex items-center gap-2">
-                          <Icon name="rss" className="w-4 h-4 text-indigo-400" />
-                          <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">Live Event Ticker</span>
-                        </div>
-                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                      </div>
-
-                      <div className="flex-1 overflow-y-auto max-h-[160px] space-y-2 font-mono text-[11px] pr-1">
-                        {(!state?.events || state.events.length === 0) && (
-                          <div className="text-center text-slate-500 py-6 text-xs font-sans">Awaiting telemetry ingestion...</div>
-                        )}
-                        {state?.events?.slice(0, 6).map((ev, idx) => (
-                          <div key={idx} className="p-2 rounded-lg input-field flex items-center justify-between gap-2 border border-slate-800/40">
-                            <div className="flex items-center gap-2 truncate">
-                              <span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
-                              <span className="text-indigo-400 font-bold">{ev.action || 'EVENT'}</span>
-                              <span className="text-slate-400 truncate max-w-[120px]">{ev.entity || ev.category}</span>
-                            </div>
-                            <span className="text-[10px] text-slate-500 flex-shrink-0">{new Date((ev.ts || 0) * 1000).toLocaleTimeString()}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {/* ================= ROLE VIEW 2: EXECUTIVE CISO DASHBOARD ================= */}
-              {viewMode === "executive" && (
-                <div className="space-y-6">
-                  {/* Executive Risk Card */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="card-panel p-6 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col justify-between">
-                      <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Executive Security Index</span>
-                      <div className="my-4 flex items-baseline gap-2">
-                        <span className={`text-5xl font-extrabold font-mono ${riskScore > 70 ? 'text-red-500' : riskScore > 30 ? 'text-amber-500' : 'text-emerald-500'}`}>
-                          {Math.round(riskScore)}
-                        </span>
-                        <span className="text-lg font-bold text-slate-400">/ 100 Criticality</span>
-                      </div>
-                      <div className="text-xs font-semibold text-slate-300 flex items-center gap-2">
-                        <span className={`w-2.5 h-2.5 rounded-full ${riskScore > 70 ? 'bg-red-500 animate-ping' : riskScore > 30 ? 'bg-amber-500' : 'bg-emerald-500'}`}></span>
-                        <span>{riskScore > 70 ? 'CRITICAL RISK LEVEL' : riskScore > 30 ? 'ELEVATED RISK LEVEL' : 'OPTIMAL SECURITY POSTURE'}</span>
-                      </div>
-                    </div>
-
-                    <div className="card-panel p-6 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col justify-between">
-                      <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Compliance & Efficacy</span>
-                      <div className="my-3 space-y-2 font-mono text-xs">
-                        <div className="flex justify-between">
-                          <span className="text-slate-400">Security Control Alignment:</span>
-                          <span className="text-emerald-400 font-bold">98.5% (NIST SP 800-53)</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-slate-400">Autonomous Containment Rate:</span>
-                          <span className="text-indigo-400 font-bold">100% Active Shield</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-slate-400">Mean Time To Detect (MTTD):</span>
-                          <span className="text-slate-200 font-bold">&lt; 15ms</span>
-                        </div>
-                      </div>
-                      <span className="text-[10px] text-slate-500 uppercase font-mono">SOC Efficacy Benchmark: Excellent</span>
-                    </div>
-
-                    <div className="card-panel p-6 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col justify-between">
-                      <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Incident Severity Breakdown</span>
-                      <div className="my-2 grid grid-cols-2 gap-3 font-mono text-xs">
-                        <div className="p-2 rounded-xl bg-red-500/10 border border-red-500/20 text-center">
-                          <span className="text-[10px] text-red-400 block font-sans">CRITICAL (70-100)</span>
-                          <span className="text-lg font-bold text-red-400">{severityCounts.crit}</span>
-                        </div>
-                        <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-center">
-                          <span className="text-[10px] text-amber-400 block font-sans">HIGH (40-69)</span>
-                          <span className="text-lg font-bold text-amber-400">{severityCounts.high}</span>
-                        </div>
-                        <div className="p-2 rounded-xl bg-blue-500/10 border border-blue-500/20 text-center">
-                          <span className="text-[10px] text-blue-400 block font-sans">MEDIUM (20-39)</span>
-                          <span className="text-lg font-bold text-blue-400">{severityCounts.med}</span>
-                        </div>
-                        <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-center">
-                          <span className="text-[10px] text-emerald-400 block font-sans">LOW (0-19)</span>
-                          <span className="text-lg font-bold text-emerald-400">{severityCounts.low}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Executive Risk Table */}
-                  <div className="card-panel p-6 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-4">
-                    <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
-                      <Icon name="award" className="w-4 h-4 text-indigo-400" />
-                      Executive Incident Log & Numerical Criticality Ratings
-                    </h3>
-                    <table className="w-full text-xs text-left">
-                      <thead className="text-slate-400 font-medium border-b border-slate-200 dark:border-slate-800">
-                        <tr>
-                          <th className="py-2">Incident ID</th>
-                          <th className="py-2">Threat Designation</th>
-                          <th className="py-2">Criticality Score</th>
-                          <th className="py-2">Severity Level</th>
-                          <th className="py-2">Containment Status</th>
-                        </tr>
-                      </thead>
-                      <tbody className="font-mono text-[11px] divide-y divide-slate-200 dark:divide-slate-800/50">
-                        {(state?.incidents || []).map((inc, i) => (
-                          <tr key={i} className="hover:bg-slate-500/5">
-                            <td className="py-2 text-indigo-400">{inc.id.substring(0, 10)}</td>
-                            <td className="py-2 font-bold text-slate-200">{inc.detections[0]?.rule_id || 'Behavioral Anomaly'}</td>
-                            <td className="py-2">
-                              <span className={`px-2 py-0.5 rounded font-bold ${inc.score >= 70 ? 'bg-red-500/20 text-red-400 border border-red-500/30' : inc.score >= 40 ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'}`}>
-                                {Math.round(inc.score)} / 100
-                              </span>
-                            </td>
-                            <td className="py-2 text-slate-300">{inc.score >= 70 ? 'CRITICAL' : inc.score >= 40 ? 'HIGH' : 'MEDIUM'}</td>
-                            <td className="py-2"><span className="text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">{inc.state || 'Contained'}</span></td>
-                          </tr>
-                        ))}
-                        {(!state?.incidents || state.incidents.length === 0) && (
-                          <tr><td colSpan="5" className="py-6 text-center text-slate-500">No active incidents logged for executive review</td></tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-
-              {/* ================= ROLE VIEW 3: THREAT HUNTER DASHBOARD ================= */}
-              {viewMode === "threat_hunter" && (
-                <div className="space-y-6">
-                  <div className="card-panel p-6 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-4">
-                    <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
-                      <h3 className="text-xs font-bold text-indigo-400 uppercase tracking-wider flex items-center gap-2">
-                        <Icon name="target" className="w-4 h-4 text-red-400" />
-                        Threat Hunter Command Center — Signal Anomaly Stream
-                      </h3>
-                      <span className="text-xs font-mono text-slate-400">Numerical Criticality Ratings Active</span>
-                    </div>
-
-                    <table className="w-full text-xs text-left">
-                      <thead className="text-slate-400 font-medium">
-                        <tr>
-                          <th className="py-2">Time</th>
-                          <th className="py-2">Signal Rule ID</th>
-                          <th className="py-2">Numerical Score</th>
-                          <th className="py-2">Target PID / Entity</th>
-                          <th className="py-2">MITRE Technique</th>
-                          <th className="py-2">Remediation Action</th>
-                        </tr>
-                      </thead>
-                      <tbody className="font-mono text-[11px] divide-y divide-slate-200 dark:divide-slate-800/50">
-                        {filteredSignals.map((d, i) => (
-                          <tr key={i} className="hover:bg-slate-500/5">
-                            <td className="py-2 text-slate-400">{new Date((d.ts || 0) * 1000).toLocaleTimeString()}</td>
-                            <td className="py-2 font-bold text-indigo-300">{d.rule_id}</td>
-                            <td className="py-2">
-                              <span className={`px-2 py-0.5 rounded font-extrabold ${d.score >= 70 ? 'bg-red-500/20 text-red-400 border border-red-500/30' : d.score >= 40 ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'}`}>
-                                {d.score} / 100
-                              </span>
-                            </td>
-                            <td className="py-2 text-slate-200">{d.entity}</td>
-                            <td className="py-2"><span className="text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20">{(d.mitre || ['T1059']).join(', ')}</span></td>
-                            <td className="py-2 text-slate-400 truncate max-w-xs">{d.remediation || 'Automated Containment'}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-
-              {/* ================= VIEW 2: SIGNAL DETECTIONS ================= */}
-              {viewMode === "detections" && (
-                <div className="card-panel p-6 rounded-2xl space-y-4">
-                  <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
-                    <h3 className="text-sm font-bold text-indigo-400 flex items-center gap-2">
-                      <Icon name="shield-alert" className="w-4 h-4" />
-                      Signal Detections & Rule Triggers
-                    </h3>
-                    <span className="text-xs font-mono text-slate-400">{filteredSignals.length} Signals Captured</span>
-                  </div>
-
-                  <table className="w-full text-xs text-left">
-                    <thead className="text-slate-400 font-medium border-b border-slate-200 dark:border-slate-800">
-                      <tr>
-                        <th className="py-2">Timestamp</th>
-                        <th className="py-2">Category</th>
-                        <th className="py-2">Rule ID</th>
-                        <th className="py-2">Target Entity</th>
-                        <th className="py-2">Detection Detail</th>
-                      </tr>
-                    </thead>
-                    <tbody className="font-mono text-[11px] divide-y divide-slate-200 dark:divide-slate-800/50">
-                      {filteredSignals.map((d, i) => (
-                        <tr key={i} className="hover:bg-slate-500/5 transition-colors">
-                          <td className="py-2.5 text-slate-400">{new Date((d.ts || 0) * 1000).toLocaleTimeString()}</td>
-                          <td className="py-2.5"><span className="px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">{d.category || 'system'}</span></td>
-                          <td className="py-2.5 text-slate-200 font-bold">{d.rule_id}</td>
-                          <td className="py-2.5 text-emerald-400">{d.entity || '-'}</td>
-                          <td className="py-2.5 text-slate-400">{d.title || d.detail || '-'}</td>
-                        </tr>
-                      ))}
-                      {filteredSignals.length === 0 && (
-                        <tr><td colSpan="5" className="py-8 text-center text-slate-500">No detection signals matching filter...</td></tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-
-              {/* ================= VIEW 3: PROCESS POOL ================= */}
-              {viewMode === "processes" && (
-                <div className="card-panel p-6 rounded-2xl space-y-4">
-                  <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
-                    <h3 className="text-sm font-bold text-indigo-400 flex items-center gap-2">
-                      <Icon name="cpu" className="w-4 h-4" />
-                      Active Endpoint Process Pool
-                    </h3>
-                    <span className="text-xs font-mono text-slate-400">{filteredProcesses.length} Running Processes</span>
-                  </div>
-
-                  <table className="w-full text-xs text-left">
-                    <thead className="text-slate-400 font-medium border-b border-slate-200 dark:border-slate-800">
-                      <tr>
-                        <th className="py-2">PID</th>
-                        <th className="py-2">Process Name</th>
-                        <th className="py-2">User / Owner</th>
-                        <th className="py-2">CPU %</th>
-                        <th className="py-2">Command Line</th>
-                      </tr>
-                    </thead>
-                    <tbody className="font-mono text-[11px] divide-y divide-slate-200 dark:divide-slate-800/50">
-                      {filteredProcesses.map((p, i) => (
-                        <tr key={i} className="hover:bg-slate-500/5 transition-colors">
-                          <td className="py-2.5 text-indigo-400">{p.pid}</td>
-                          <td className="py-2.5 font-bold text-slate-200">{p.name}</td>
-                          <td className="py-2.5 text-slate-400">{p.user}</td>
-                          <td className="py-2.5 text-amber-500">{p.cpu}</td>
-                          <td className="py-2.5 text-slate-400 truncate max-w-md">{p.cmdline || '-'}</td>
-                        </tr>
-                      ))}
-                      {filteredProcesses.length === 0 && (
-                        <tr><td colSpan="5" className="py-8 text-center text-slate-500">No active processes found matching search filter...</td></tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-
-              {/* ================= VIEW 4: RAW TELEMETRY ================= */}
-              {viewMode === "telemetry" && (
-                <div className="card-panel p-6 rounded-2xl space-y-4">
-                  <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
-                    <h3 className="text-sm font-bold text-indigo-400 flex items-center gap-2">
-                      <Icon name="activity" className="w-4 h-4" />
-                      Raw Endpoint Telemetry Stream
-                    </h3>
-                    <span className="text-xs font-mono text-slate-400">{filteredEvents.length} Events Ingested</span>
-                  </div>
-
-                  <table className="w-full text-xs text-left">
-                    <thead className="text-slate-400 font-medium border-b border-slate-200 dark:border-slate-800">
-                      <tr>
-                        <th className="py-2">Timestamp</th>
-                        <th className="py-2">Category</th>
-                        <th className="py-2">Action</th>
-                        <th className="py-2">Process PID</th>
-                        <th className="py-2">Target Entity / Path</th>
-                      </tr>
-                    </thead>
-                    <tbody className="font-mono text-[11px] divide-y divide-slate-200 dark:divide-slate-800/50">
-                      {filteredEvents.map((e, i) => (
-                        <tr key={i} className="hover:bg-slate-500/5 transition-colors">
-                          <td className="py-2.5 text-slate-400">{new Date((e.ts || 0) * 1000).toLocaleTimeString()}</td>
-                          <td className="py-2.5 text-slate-300">{e.category}</td>
-                          <td className="py-2.5 text-indigo-400">{e.action}</td>
-                          <td className="py-2.5 text-slate-300">{(e.attrs?.pid || e.pid) ? `${e.attrs?.pid || e.pid}` : '-'}</td>
-                          <td className="py-2.5 text-slate-400 truncate max-w-xs">{e.entity || '-'}</td>
-                        </tr>
-                      ))}
-                      {filteredEvents.length === 0 && (
-                        <tr><td colSpan="5" className="py-8 text-center text-slate-500">No raw events matching search filter...</td></tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-
-              {/* ================= VIEW 5: YARA SIGNATURES ================= */}
-              {viewMode === "rules" && (
-                <div className="card-panel p-6 rounded-2xl space-y-6">
-                  <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
-                    <h3 className="text-sm font-bold text-indigo-400 flex items-center gap-2">
-                      <Icon name="file-code" className="w-4 h-4" />
-                      Detection Engine Rules & YARA Signatures
-                    </h3>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="p-4 rounded-xl input-field flex flex-col justify-between">
-                      <span className="text-xs text-slate-400 font-semibold">Loaded Rule Set</span>
-                      <span className="text-2xl font-bold font-mono text-indigo-400 mt-2">{state?.status?.detectors?.rules_loaded || 0} Rules</span>
-                    </div>
-                    <div className="p-4 rounded-xl input-field flex flex-col justify-between">
-                      <span className="text-xs text-slate-400 font-semibold">Active YARA Files</span>
-                      <span className="text-2xl font-bold font-mono text-emerald-400 mt-2">{state?.status?.detectors?.yara_files_loaded || 0} Rulesets</span>
-                    </div>
-                    <div className="p-4 rounded-xl input-field flex flex-col justify-between">
-                      <span className="text-xs text-slate-400 font-semibold">Engine Status</span>
-                      <span className="text-2xl font-bold font-mono text-blue-400 mt-2">Active Scanning</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* ================= VIEW 6: AGENT CONFIG ================= */}
-              {viewMode === "config" && (
-                <div className="card-panel p-6 rounded-2xl space-y-6">
-                  <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
-                    <h3 className="text-sm font-bold text-indigo-400 flex items-center gap-2">
-                      <Icon name="server" className="w-4 h-4" />
-                      Agent Host Status & Pipeline Diagnostic
-                    </h3>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="p-4 rounded-xl input-field space-y-3 font-mono text-xs">
-                      <h4 className="font-bold text-slate-200 border-b border-slate-800 pb-2">Host Metadata</h4>
-                      <div><span className="text-slate-500">Hostname:</span> {state?.status?.host?.hostname}</div>
-                      <div><span className="text-slate-500">Platform:</span> {state?.status?.host?.platform}</div>
-                      <div><span className="text-slate-500">Architecture:</span> {state?.status?.host?.arch}</div>
-                      <div><span className="text-slate-500">Kernel Version:</span> {state?.status?.host?.kernel}</div>
-                      <div><span className="text-slate-500">Uptime:</span> {Math.round((state?.status?.host?.uptime_s || 0) / 3600)} hrs</div>
-                    </div>
-
-                    <div className="p-4 rounded-xl input-field space-y-3 font-mono text-xs">
-                      <h4 className="font-bold text-slate-200 border-b border-slate-800 pb-2">Pipeline Diagnostics</h4>
-                      <div><span className="text-slate-500">Queue Depth:</span> {state?.status?.pipeline?.queue_depth}</div>
-                      <div><span className="text-slate-500">Events Processed:</span> {state?.status?.pipeline?.events_processed}</div>
-                      <div><span className="text-slate-500">Events Dropped:</span> {state?.status?.pipeline?.events_dropped}</div>
-                      <div><span className="text-slate-500">Throughput:</span> {state?.status?.pipeline?.throughput_eps} EPS</div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-            </div>
-          </div>
-
-          <Chatbot session="react_client" hostState={state} />
-        </div>
-      );
-    };
-
-    // --- APP ROOT ---
-    const App = () => {
-      const [token, setTokenState] = useState(getToken());
-      const [state, setState] = useState(null);
-      const [theme, setTheme] = useState('dark');
-      const wsRef = useRef(null);
-
-      const toggleTheme = () => {
-        const nextTheme = theme === 'dark' ? 'light' : 'dark';
-        setTheme(nextTheme);
-        if (nextTheme === 'dark') {
-          document.documentElement.classList.add('dark');
-        } else {
-          document.documentElement.classList.remove('dark');
-        }
-      };
-
-      useEffect(() => {
-        document.documentElement.classList.add('dark');
-      }, []);
-
-      const handleLogin = (t) => {
-        setToken(t);
-        setTokenState(t);
-      };
-      
-      const handleLogout = () => {
-        setToken(null);
-        setTokenState(null);
-      };
-
-      useEffect(() => {
-        if (!token) return;
-        
-        let wsProto = window.location.protocol === "https:" ? "wss:" : "ws:";
-        const ws = new WebSocket(`${wsProto}//${window.location.host}/ws`);
-        
-        // Incoming message buffers
-        let pendingSnapshot = null;
-        let pendingMetrics = null;
-        let pendingEvents = [];
-        let pendingDetections = [];
-        let pendingIncidents = [];
-        let pendingActions = [];
-
-        ws.onopen = () => ws.send(JSON.stringify({ type: "auth", token }));
-        ws.onmessage = (e) => {
-          try {
-            const msg = JSON.parse(e.data);
-            if (msg.type === "snapshot") {
-              pendingSnapshot = msg.data;
-            } else if (msg.type === "metrics") {
-              pendingMetrics = msg.data;
-            } else if (msg.type === "events") {
-              pendingEvents = [...(msg.data || []), ...pendingEvents].slice(0, 100);
-            } else if (msg.type === "detections") {
-              pendingDetections = [...(msg.data || []), ...pendingDetections].slice(0, 50);
-            } else if (msg.type === "incident") {
-              pendingIncidents.unshift(msg.data);
-            } else if (msg.type === "action") {
-              pendingActions.unshift(msg.data);
-            }
-          } catch(err) {}
-        };
-        ws.onclose = () => console.log("WebSocket connection closed");
-        wsRef.current = ws;
-
-        // Flush pending telemetry buffer to React state smoothly every 500ms
-        const flushTimer = setInterval(() => {
-          setState(prev => {
-            let updated = { ...prev };
-            let hasChanges = false;
-
-            if (pendingSnapshot) {
-              updated = { ...updated, ...pendingSnapshot };
-              pendingSnapshot = null;
-              hasChanges = true;
-            }
-            if (pendingMetrics) {
-              updated.metrics = pendingMetrics;
-              updated.history = [...(updated.history || []), pendingMetrics].slice(-60);
-              pendingMetrics = null;
-              hasChanges = true;
-            }
-            if (pendingEvents.length > 0) {
-              updated.events = [...pendingEvents, ...(updated.events || [])].slice(0, 100);
-              pendingEvents = [];
-              hasChanges = true;
-            }
-            if (pendingDetections.length > 0) {
-              updated.detections = [...pendingDetections, ...(updated.detections || [])].slice(0, 50);
-              pendingDetections = [];
-              hasChanges = true;
-            }
-            if (pendingIncidents.length > 0) {
-              const incs = [...(updated.incidents || [])];
-              pendingIncidents.forEach(item => {
-                const idx = incs.findIndex(i => i.id === item.id);
-                if (idx >= 0) incs[idx] = item;
-                else incs.unshift(item);
-              });
-              updated.incidents = incs;
-              pendingIncidents = [];
-              hasChanges = true;
-            }
-            if (pendingActions.length > 0) {
-              updated.actions = [...pendingActions, ...(updated.actions || [])].slice(0, 30);
-              pendingActions = [];
-              hasChanges = true;
-            }
-
-            return hasChanges ? updated : prev;
-          });
-        }, 500);
-
-        const poll = setInterval(async () => {
-           try { await apiFetch("/api/health"); } catch(e) {}
-        }, 5000);
-
-        return () => {
-          ws.close();
-          clearInterval(flushTimer);
-          clearInterval(poll);
-        };
-      }, [token]);
-
-      if (!token) return <LoginScreen onLogin={handleLogin} theme={theme} toggleTheme={toggleTheme} />;
-      return <Dashboard state={state} logout={handleLogout} theme={theme} toggleTheme={toggleTheme} />;
-    };
-
-    class ErrorBoundary extends React.Component {
-      constructor(props) {
-        super(props);
-        this.state = { hasError: false };
-      }
-      static getDerivedStateFromError(error) {
-        return { hasError: true };
-      }
-      componentDidCatch(error, errorInfo) {
-        console.error("React Error Boundary Caught:", error, errorInfo);
-      }
-      render() {
-        if (this.state.hasError) {
-          return (
-            <div className="flex flex-col items-center justify-center h-screen bg-slate-900 text-white p-6 text-center">
-              <h2 className="text-xl font-bold text-indigo-400 mb-2">SOC Dashboard Recovered</h2>
-              <p className="text-xs text-slate-400 mb-4 max-w-md">Telemetry stream was safely intercepted. Click below to refresh view.</p>
-              <button onClick={() => { this.setState({ hasError: false }); window.location.reload(); }} className="px-4 py-2 bg-indigo-600 rounded-xl text-xs font-semibold hover:bg-indigo-500">
-                Reload Telemetry View
-              </button>
-            </div>
-          );
-        }
-        return this.props.children;
+      if (!token) {
+        authScreen.classList.remove("hidden");
+        appScreen.classList.add("hidden");
+      } else {
+        authScreen.classList.add("hidden");
+        appScreen.classList.remove("hidden");
+        connectWebSocket(token);
       }
     }
 
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(
-      <ErrorBoundary>
-        <App />
-      </ErrorBoundary>
-    );
+    // Login Form Handler
+    loginForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      loginErr.classList.add("hidden");
+      const u = document.getElementById("input-user").value;
+      const p = document.getElementById("input-pass").value;
+
+      try {
+        const body = new URLSearchParams({ username: u, password: p });
+        const res = await fetch("/api/token", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body
+        });
+        if (!res.ok) throw new Error("Invalid username or password");
+        const data = await res.json();
+        setToken(data.access_token);
+        init();
+      } catch(err) {
+        loginErr.textContent = err.message;
+        loginErr.classList.remove("hidden");
+      }
+    });
+
+    // Theme Toggle Handler
+    document.getElementById("btn-theme").addEventListener("click", () => {
+      document.documentElement.classList.toggle("dark");
+      const isDark = document.documentElement.classList.contains("dark");
+      document.getElementById("theme-icon").textContent = isDark ? "🌙" : "☀️";
+      document.getElementById("theme-label").textContent = isDark ? "Dark Theme" : "Light Theme";
+    });
+
+    // Logout Handler
+    document.getElementById("btn-logout").addEventListener("click", () => {
+      setToken(null);
+      window.location.reload();
+    });
+
+    // Navigation Switcher
+    document.querySelectorAll(".nav-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".nav-btn").forEach(b => {
+          b.className = "nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60";
+        });
+        btn.className = "nav-btn active w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold bg-indigo-600 text-white shadow-md shadow-indigo-600/20";
+        
+        const targetView = btn.getAttribute("data-view");
+        currentViewBadge.textContent = `${targetView.toUpperCase()} VIEW`;
+        
+        document.querySelectorAll("#main-content > div").forEach(div => {
+          if (div.id === `view-${targetView}`) div.classList.remove("hidden");
+          else div.classList.add("hidden");
+        });
+      });
+    });
+
+    // Interactive Mode Toggle Switcher
+    document.getElementById("btn-toggle-mode").addEventListener("click", async () => {
+      const token = getToken();
+      try {
+        const res = await fetch("/api/config/mode", {
+          method: "POST",
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          updateModeBadge(data.mode);
+        }
+      } catch(err) {}
+    });
+
+    function updateModeBadge(mode) {
+      const btn = document.getElementById("btn-toggle-mode");
+      const text = document.getElementById("mode-text");
+      if (mode === "enforcing") {
+        btn.className = "hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold border transition-all cursor-pointer shadow-sm border-red-500/40 bg-red-500/15 text-red-500";
+        text.textContent = "PREVENTION ARMED (ENFORCING)";
+      } else {
+        btn.className = "hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold border transition-all cursor-pointer shadow-sm border-amber-500/40 bg-amber-500/15 text-amber-600 dark:text-amber-400";
+        text.textContent = "SAFE MODE (DRY RUN)";
+      }
+    }
+
+    // High-Performance WebSocket Telemetry Connection
+    function connectWebSocket(token) {
+      const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
+      const ws = new WebSocket(`${proto}//${window.location.host}/ws`);
+
+      let pendingSnapshot = null;
+      let pendingMetrics = null;
+      let pendingEvents = [];
+      let pendingDetections = [];
+      let pendingIncidents = [];
+      let pendingActions = [];
+
+      ws.onopen = () => ws.send(JSON.stringify({ type: "auth", token }));
+
+      ws.onmessage = (e) => {
+        try {
+          const msg = JSON.parse(e.data);
+          if (msg.type === "snapshot") pendingSnapshot = msg.data;
+          else if (msg.type === "metrics") pendingMetrics = msg.data;
+          else if (msg.type === "events") pendingEvents = [...(msg.data || []), ...pendingEvents].slice(0, 100);
+          else if (msg.type === "detections") pendingDetections = [...(msg.data || []), ...pendingDetections].slice(0, 50);
+          else if (msg.type === "incident") pendingIncidents.unshift(msg.data);
+          else if (msg.type === "action") pendingActions.unshift(msg.data);
+        } catch(err) {}
+      };
+
+      // Smooth 500ms Throttle Flush (ZERO Heap Spikes / ZERO Tab Crashes)
+      setInterval(() => {
+        if (pendingSnapshot) {
+          state = { ...state, ...pendingSnapshot };
+          pendingSnapshot = null;
+        }
+        if (pendingMetrics) {
+          state.metrics = pendingMetrics;
+          pendingMetrics = null;
+        }
+        if (pendingEvents.length > 0) {
+          state.events = [...pendingEvents, ...(state.events || [])].slice(0, 100);
+          pendingEvents = [];
+        }
+        if (pendingDetections.length > 0) {
+          state.detections = [...pendingDetections, ...(state.detections || [])].slice(0, 50);
+          pendingDetections = [];
+        }
+        if (pendingIncidents.length > 0) {
+          const incs = [...(state.incidents || [])];
+          pendingIncidents.forEach(item => {
+            const idx = incs.findIndex(i => i.id === item.id);
+            if (idx >= 0) incs[idx] = item;
+            else incs.unshift(item);
+          });
+          state.incidents = incs;
+          pendingIncidents = [];
+        }
+        if (pendingActions.length > 0) {
+          state.actions = [...pendingActions, ...(state.actions || [])].slice(0, 30);
+          pendingActions = [];
+        }
+
+        renderUI();
+      }, 500);
+    }
+
+    // High-Performance DOM Render Function
+    function renderUI() {
+      // Host info
+      if (state.status?.host) {
+        document.getElementById("host-name").textContent = state.status.host.hostname || "LocalHost";
+        document.getElementById("host-platform").textContent = state.status.host.platform || "Windows 11";
+      }
+      if (state.status?.response) {
+        updateModeBadge(state.status.response.mode);
+      }
+
+      // Incidents calculations
+      const openIncidents = (state.incidents || []).filter(i => i.state !== 'closed' && i.state !== 'contained');
+      const maxScore = openIncidents.length > 0 ? Math.max(...openIncidents.map(i => i.score || 0)) : 0;
+
+      // Update Gauge
+      const gaugeArc = document.getElementById("gauge-path");
+      const gaugeScoreNum = document.getElementById("gauge-score-num");
+      const gaugeStatusLabel = document.getElementById("gauge-status-label");
+      
+      gaugeScoreNum.textContent = Math.round(maxScore);
+      gaugeArc.style.strokeDashoffset = 125 - (maxScore / 100) * 125;
+
+      if (maxScore >= 70) {
+        gaugeScoreNum.className = "text-4xl font-extrabold tracking-tight text-red-500";
+        gaugeStatusLabel.className = "mt-3 text-xs font-extrabold uppercase tracking-widest text-red-500";
+        gaugeStatusLabel.textContent = "CRITICAL THREAT";
+      } else if (maxScore >= 50) {
+        gaugeScoreNum.className = "text-4xl font-extrabold tracking-tight text-amber-500";
+        gaugeStatusLabel.className = "mt-3 text-xs font-extrabold uppercase tracking-widest text-amber-500";
+        gaugeStatusLabel.textContent = "ELEVATED RISK";
+      } else {
+        gaugeScoreNum.className = "text-4xl font-extrabold tracking-tight text-emerald-500";
+        gaugeStatusLabel.className = "mt-3 text-xs font-extrabold uppercase tracking-widest text-emerald-500";
+        gaugeStatusLabel.textContent = "SYSTEM SECURE";
+      }
+
+      // Incident Queue Rendering
+      const queueContainer = document.getElementById("incident-queue-container");
+      if (openIncidents.length === 0) {
+        queueContainer.innerHTML = '<div class="text-center py-10 text-xs text-slate-400">No active threat incidents logged. System safe.</div>';
+      } else {
+        queueContainer.innerHTML = openIncidents.map(inc => {
+          const isCrit = inc.score >= 70;
+          const isHigh = inc.score >= 50;
+          const badgeClass = isCrit 
+            ? "bg-red-500/20 text-red-500 border-red-500/30" 
+            : isHigh 
+              ? "bg-amber-500/20 text-amber-500 border-amber-500/30" 
+              : "bg-emerald-500/20 text-emerald-500 border-emerald-500/30";
+
+          return `
+            <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 input-field flex items-start justify-between gap-3">
+              <div class="flex items-start gap-3">
+                <div class="px-2.5 py-1.5 rounded-xl text-center border ${badgeClass}">
+                  <span class="text-[9px] font-black uppercase tracking-wider block">${isCrit ? 'CRIT' : isHigh ? 'HIGH' : 'LOW'}</span>
+                  <span class="text-sm font-extrabold font-mono">${Math.round(inc.score)}</span>
+                </div>
+                <div>
+                  <div class="flex items-center gap-2 mb-1">
+                    <h4 class="text-xs font-bold text-indigo-400 font-mono">${inc.detections[0]?.rule_id || 'Behavioral Threat'}</h4>
+                    <span class="text-[10px] text-slate-500 font-mono">ID: ${inc.id.substring(0,8)}</span>
+                  </div>
+                  <p class="text-xs text-slate-300">${inc.detections[0]?.title || 'Suspicious process execution detected.'}</p>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join("");
+      }
+
+      // Response Log Rendering
+      const logBody = document.getElementById("response-log-tbody");
+      if (!state.actions || state.actions.length === 0) {
+        logBody.innerHTML = '<tr><td colSpan="5" class="py-6 text-center text-slate-500">No automated actions logged yet.</td></tr>';
+      } else {
+        logBody.innerHTML = state.actions.slice(0, 15).map(act => `
+          <tr class="hover:bg-slate-500/5">
+            <td class="py-2 text-slate-400">${new Date((act.ts || 0) * 1000).toLocaleTimeString()}</td>
+            <td class="py-2"><span class="bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded border border-purple-500/30 uppercase text-[10px] font-bold">${act.action}</span></td>
+            <td class="py-2 text-slate-300 font-mono">${act.target}</td>
+            <td class="py-2"><span class="text-slate-400 border border-slate-700 px-2 py-0.5 rounded text-[10px]">${act.dry_run ? 'DRY RUN' : act.executed ? 'EXECUTED' : 'FAILED'}</span></td>
+            <td class="py-2 text-slate-400">${act.detail}</td>
+          </tr>
+        `).join("");
+      }
+    }
+
+    // Initialize App
+    init();
   </script>
 </body>
 </html>
